@@ -4,29 +4,39 @@
     "description": "Testes automatizados de API com Newman & Swagger",
     "main": "index.js",
     "scripts": {
-      "test": "jest && cucumber-js",
-      "generate-tests": "node scripts/generators/example.js",
-      "report": "newman run artifacts/collections/collection.json -r html,cli",
-      "monitor:queues": "node core/monitoring/index.js",
-      "setup": "node scripts/setup/example.js",
-      "doc": "jsdoc -c jsdoc.json"
+        "test": "jest && cucumber-js",
+        "generate-tests": "node scripts/generators/example.js",
+        "prereport": "mkdir -p artifacts/reports",
+        "report": "newman run artifacts/collections/generated-collection.json -r cli,junit,htmlextra --reporter-junit-export artifacts/reports/junit-report.xml --reporter-htmlextra-export artifacts/reports/html-report.html --reporter-htmlextra-showOnlyFails --reporter-htmlextra-testPaging --env-var \"baseUrl=http://localhost:3000\"",
+        "monitor:queues": "node core/monitoring/index.js",
+        "setup": "node scripts/setup/example.js",
+        "doc": "jsdoc -c jsdoc.json",
+        "import-swagger": "node core/swagger/index.js --file",
+        "generate-collection": "node core/builders/index.js",
+        "pretest:unit": "mkdir -p artifacts/logs",
+        "test:unit": "newman run artifacts/collections/generated-collection.json -r cli,json --reporter-json-export artifacts/logs/unit-tests-report.json --env-var \"baseUrl=http://localhost:3000\" > artifacts/logs/unit-tests.log 2>&1",
+        "test:bdd": "cucumber-js tests/bdd/features/**/*.feature --require tests/bdd/step-definitions/**/*.js --require tests/bdd/support/**/*.js",
+        "report:open": "open artifacts/reports/html-report.html || xdg-open artifacts/reports/html-report.html"
     },
     "author": "Seu Nome",
     "license": "MIT",
     "dependencies": {
-      "newman": "^6.0.0",
-      "swagger-parser": "^10.0.2",
-      "jest": "^29.0.0",
-      "@cucumber/cucumber": "^9.0.0",
-      "yaml": "^2.0.0",
-      "dotenv": "^16.0.0"
+        "@cucumber/cucumber": "^9.0.0",
+        "axios": "^1.9.0",
+        "dotenv": "^16.0.0",
+        "jest": "^29.0.0",
+        "newman": "^6.0.0",
+        "openapi-to-postmanv2": "^5.0.0",
+        "swagger-parser": "^10.0.2",
+        "yaml": "^2.0.0"
     },
     "devDependencies": {
-      "eslint": "^8.0.0",
-      "prettier": "^3.0.0",
-      "jsdoc": "^4.0.0"
+        "eslint": "^8.0.0",
+        "jsdoc": "^4.0.0",
+        "newman-reporter-htmlextra": "^1.23.1",
+        "prettier": "^3.0.0"
     },
     "engines": {
-      "node": ">=16.0.0"
+        "node": ">=16.0.0"
     }
-  }
+}

@@ -1,0 +1,17 @@
+{
+  "createUser": {
+    "valid": {
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "password": "securePassword123"
+    },
+    "invalid": {
+      "name": "Jane Doe",
+      "email": "jane.doe.invalid", 
+      "password": "short"
+    }
+  },
+  "getUser": {
+    "byId": "user123" 
+  }
+}
