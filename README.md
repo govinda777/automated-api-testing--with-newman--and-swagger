@@ -1,6 +1,6 @@
 # Automated API Testing with Newman & Swagger
 
-![CI/CD](./1.png)
+![CI/CD](./img/1.png)
 
 Um projeto de testes inovador que recebe especificações Swagger/OpenAPI e gera automaticamente collections Newman, executando testes para cada rota e método HTTP de forma completamente automatizada.
 
@@ -32,19 +32,19 @@ Este projeto automatiza testes de API ao:
 ## Fluxo de Trabalho
 
 1. **Importar Swagger**
-   ![Importar Swagger](./1.png)
+   ![Importar Swagger](./img/1.png)
 2. **Converter e Executar Testes**
-   ![Converter para Newman](./2.png)
+   ![Converter para Newman](./img/2.png)
 3. **Configurar Testes BDD**
-   ![Testes BDD](./3.png)
+   ![Testes BDD](./img/3.png)
 4. **Geração de Relatórios**
-   ![Relatórios](./4.png)
+   ![Relatórios](./img/4.png)
 
 ---
 
 ## Arquitetura
 
-![Arquitetura](./5.png)
+![Arquitetura](./img/5.png)
 
 A arquitetura é simples e escalável, combinando Swagger/OpenAPI com Newman para criar um pipeline de testes robusto.
 
@@ -53,13 +53,13 @@ A arquitetura é simples e escalável, combinando Swagger/OpenAPI com Newman par
 ## Componentes Principais
 
 1. **Swagger/OpenAPI**
-   ![Swagger Import](./6.png)
+   ![Swagger Import](./img/6.png)
 2. **Conversor para Newman**
-   ![Converter para Newman](./7.png)
+   ![Converter para Newman](./img/7.png)
 3. **Runner de Testes (Newman)**
-   ![Execução Newman](./8.png)
+   ![Execução Newman](./img/8.png)
 4. **Reporters**
-   ![Reporters](./9.png)
+   ![Reporters](./img/9.png)
 
 ---
 
@@ -88,6 +88,12 @@ A arquitetura é simples e escalável, combinando Swagger/OpenAPI com Newman par
 - Relatórios detalhados para stakeholders
 
 ---
+
+## Docs
+
+```bash
+yarn doc
+```
 
 ## Como Usar
 

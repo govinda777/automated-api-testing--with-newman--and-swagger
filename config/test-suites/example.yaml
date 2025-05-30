@@ -1,0 +1,7 @@
+# Exemplo de suite de teste
+suite:
+  name: "Suite Principal"
+  description: "Testes principais da API"
+  tests:
+    - name: "Teste de autenticação"
+      path: "tests/integration/auth.test.js" 

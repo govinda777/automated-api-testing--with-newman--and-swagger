@@ -1,0 +1,4 @@
+# Exemplo de configuração de ambiente
+environment: dev
+baseUrl: http://localhost:3000
+apiKey: "SUA_API_KEY_AQUI" 
