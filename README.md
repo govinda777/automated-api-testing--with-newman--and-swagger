@@ -1,6 +1,6 @@
 # Automated API Testing with Newman & Swagger
 
-![CI/CD](./img/1.png)
+![CI/CD](./img/1.1.png)
 
 Um projeto de testes inovador que recebe especificações Swagger/OpenAPI e gera automaticamente collections Newman, executando testes para cada rota e método HTTP de forma completamente automatizada.
 
