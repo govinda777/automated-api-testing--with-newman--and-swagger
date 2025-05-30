@@ -3,6 +3,15 @@
 Tarefas necessárias para executar e concluir o projeto, seguindo o fluxo que você descreveu. Vou detalhar cada etapa em tarefas práticas, sugerindo subtarefas e entregáveis claros para facilitar o acompanhamento.
 
 ---
+## 0. A partir de um swagger criar um servidor de mok
+
+- [ ] **Gerar servidor de mock a partir do Swagger**
+  - [ ] Pesquisar e escolher uma ferramenta/biblioteca de mock compatível (ex: [Prism](https://github.com/stoplightio/prism), [swagger-mock-api](https://www.npmjs.com/package/swagger-mock-api), [swagger-mock-express](https://www.npmjs.com/package/swagger-mock-express))
+  - [ ] Criar script (ex: `scripts/mock-server.js`) que utilize o arquivo Swagger localizado em `/core/swagger/swagger.yaml`
+  - [ ] Adicionar comando no `package.json` (ex: `npm run mock-server`)
+  - [ ] Permitir configuração de porta e baseUrl via argumentos ou variáveis de ambiente
+  - [ ] Documentar no README como subir o mock server
+  - [ ] (Opcional) Permitir hot-reload do mock ao alterar o arquivo Swagger
 
 ## 1. Importar o arquivo Swagger
 
