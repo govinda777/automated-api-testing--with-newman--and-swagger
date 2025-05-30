@@ -44,6 +44,33 @@ convert({ type: 'json', data: swaggerData }, {}, (err, conversionResult) => {
           exec: [
             'pm.test("Status code is 2xx", function () {',
             '    pm.response.to.be.success;',
+            '});',
+            '',
+            'pm.test("Schema is valid", function() {',
+            '    // Attempt to get the schema from the response definition in the collection',
+            '    // openapi-to-postmanv2 might store the expected response schema here',
+            '    if (pm.item.responses && pm.item.responses.members && pm.item.responses.members[0] && pm.item.responses.members[0].body) {',
+            '        let expectedSchema = pm.item.responses.members[0].body;',
+            '        if (expectedSchema) {',
+            '            try {',
+            '                // Assuming the schema is a JSON string, it needs to be parsed',
+            '                let schema = JSON.parse(expectedSchema);',
+            '                pm.response.to.have.jsonSchema(schema);',
+            '            } catch (e) {',
+            '                console.error("Failed to parse schema or schema not found for this request. Schema string: " + expectedSchema, e);',
+            '                // Fail the test if schema cannot be parsed or is invalid',
+            '                pm.expect(false, "Schema parsing/validation failed: " + e.message).to.be.true;',
+            '            }',
+            '        } else {',
+            '            // If no schema is defined for the response, log it.',
+            '            // Depending on requirements, this could be a failing test.',
+            '            console.log("No schema found for this response in the collection definition.");',
+            '        }',
+            '    } else {',
+            '        console.log("No response schema definition found in pm.item.responses for this request.");',
+            '        // Optionally, fail the test if a schema is always expected.',
+            '        // pm.expect(false, "Response schema definition missing in collection").to.be.true;',
+            '    }',
             '});'
           ],
           type: 'text/javascript'
@@ -59,5 +86,5 @@ convert({ type: 'json', data: swaggerData }, {}, (err, conversionResult) => {
 
   fs.writeFileSync(outputCollectionPath, JSON.stringify(collection, null, 2));
   console.log('Postman collection generated successfully at ' + outputCollectionPath);
-  console.log('Basic tests added to the collection.');
+  console.log('Basic tests and schema validation tests added to the collection.');
 });

@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "test": "jest && cucumber-js",
-        "generate-tests": "node scripts/generators/example.js",
+        "generate:data": "node scripts/generators/example.js",
         "prereport": "mkdirp artifacts/reports",
         "report": "newman run artifacts/collections/generated-collection.json -r cli,junit,htmlextra --reporter-junit-export artifacts/reports/junit-report.xml --reporter-htmlextra-export artifacts/reports/html-report.html --reporter-htmlextra-showOnlyFails --reporter-htmlextra-testPaging --env-var \"baseUrl=http://localhost:3000\"",
         "monitor:queues": "node core/monitoring/index.js",
@@ -15,8 +15,11 @@
         "generate-collection": "node core/builders/index.js",
         "pretest:unit": "mkdirp artifacts/logs",
         "test:unit": "newman run artifacts/collections/generated-collection.json -r cli,json --reporter-json-export artifacts/logs/unit-tests-report.json --env-var \"baseUrl=http://localhost:3000\" > artifacts/logs/unit-tests.log 2>&1",
-        "test:bdd": "cucumber-js tests/bdd/features/**/*.feature --require tests/bdd/step-definitions/**/*.js --require tests/bdd/support/**/*.js",
-        "report:open": "open artifacts/reports/html-report.html || xdg-open artifacts/reports/html-report.html"
+        "test:unit:folder": "newman run artifacts/collections/generated-collection.json -r cli,json --reporter-json-export artifacts/logs/unit-tests-folder-report.json --env-var \"baseUrl=http://localhost:3000\" --folder > artifacts/logs/unit-tests-folder.log 2>&1",
+        "test:bdd": "cucumber-js tests/bdd/features/**/*.feature --require tests/bdd/step-definitions/**/*.js --require tests/bdd/support/**/*.js --format json:artifacts/logs/bdd-report.json",
+        "report:dashboard": "node scripts/generate-dashboard.js",
+        "report:open": "open artifacts/reports/html-report.html || xdg-open artifacts/reports/html-report.html",
+        "mock-server": "node scripts/mock-server.js"
     },
     "author": "Seu Nome",
     "license": "MIT",
@@ -31,6 +34,8 @@
         "yaml": "^2.0.0"
     },
     "devDependencies": {
+        "@faker-js/faker": "^9.8.0",
+        "@stoplight/prism-cli": "^5.14.2",
         "eslint": "^8.0.0",
         "jsdoc": "^4.0.0",
         "mkdirp": "^3.0.1",
