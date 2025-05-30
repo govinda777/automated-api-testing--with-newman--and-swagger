@@ -12,6 +12,7 @@ Este projeto oferece um framework robusto para automatizar testes de API, conver
 - [Configuração Inicial](#configuração-inicial)
 - [Fluxo de Trabalho Típico](#fluxo-de-trabalho-típico)
 - [Comandos Disponíveis (NPM Scripts)](#comandos-disponíveis-npm-scripts)
+- [Servidor de Mock (Mock Server)](#servidor-de-mock-mock-server)
 - [Estratégia de Testes](#estratégia-de-testes)
 - [Geração de Relatórios](#geração-de-relatórios)
 - [Configuração de Ambiente](#configuração-de-ambiente)
@@ -122,13 +123,57 @@ A estrutura do projeto é organizada da seguinte forma:
 
 -   `npm run import-swagger -- --file=<filePath>`: Valida um arquivo Swagger/OpenAPI e o copia para `/core/swagger/swagger.yaml`.
     -   Exemplo: `npm run import-swagger -- --file=./docs/swagger.yaml`
--   `npm run generate-collection`: Gera uma coleção Postman a partir do `/core/swagger/swagger.yaml` e a salva em `/artifacts/collections/generated-collection.json`, adicionando testes básicos para cada request.
+-   `npm run generate-collection`: Gera uma coleção Postman a partir do `/core/swagger/swagger.yaml` e a salva em `/artifacts/collections/generated-collection.json`, adicionando testes básicos para cada request (status code, validação de schema).
+-   `npm run generate:data`: Executa o script `scripts/generators/example.js` para gerar massa de dados de teste dinâmica usando `@faker-js/faker`. Os dados são salvos, por padrão, em `tests/data/generated/dynamic-users.json`. Veja `tests/data/README.md` para mais detalhes sobre como usar e customizar a geração de dados.
 -   `npm run test`: Executa testes Jest (se houver) e testes Cucumber.js (BDD). (Comportamento padrão original, pode ser ajustado).
 -   `npm run test:unit`: Executa a coleção Postman gerada (`generated-collection.json`) com Newman, gerando um relatório JSON e um log de console em `/artifacts/logs/`. Utiliza `http://localhost:3000` como `baseUrl` por padrão.
+-   `npm run test:unit:folder <folderName>`: Executa apenas uma pasta específica dentro da coleção Postman gerada. Substitua `<folderName>` pelo nome exato da pasta na coleção (e.g., "User Management"). Gera um relatório JSON (`unit-tests-folder-report.json`) e um log de console (`unit-tests-folder.log`) em `/artifacts/logs/`.
+    -   Exemplo: `npm run test:unit:folder "User Management"`
 -   `npm run test:bdd`: Executa os testes BDD usando Cucumber.js localizados em `/tests/bdd/features/`.
 -   `npm run report`: Gera relatórios de teste consolidados (JUnit XML e HTMLEXTRA HTML) em `/artifacts/reports/` a partir da execução da coleção `generated-collection.json`.
+-   `npm run report:dashboard`: Gera um dashboard HTML agregado (`artifacts/reports/dashboard.html`) a partir dos resultados JSON dos testes Newman e Cucumber. **Importante:** Execute `npm run test:unit`, `npm run test:bdd`, e `npm run report` *antes* deste comando para garantir que os dados de origem e links estejam corretos e atualizados.
 -   `npm run report:open`: Tenta abrir o relatório HTML (`html-report.html`) no navegador padrão.
 -   `npm run doc`: Gera documentação JSDoc (se configurado).
+-   `npm run mock-server`: Inicia o servidor de mock da API utilizando o Prism. Veja a seção [Servidor de Mock (Mock Server)](#servidor-de-mock-mock-server) para mais detalhes.
+
+---
+
+## Servidor de Mock (Mock Server)
+
+Para facilitar o desenvolvimento e testes isolados, este projeto inclui um servidor de mock baseado no Prism. Ele utiliza o arquivo de especificação OpenAPI (`core/swagger/swagger.yaml`) para simular o comportamento da API, retornando respostas dinâmicas baseadas nos exemplos e schemas definidos.
+
+**Utilidade:**
+-   Desenvolver o frontend ou outros serviços que dependem da API antes que ela esteja totalmente implementada.
+-   Executar testes de contrato e de integração em um ambiente controlado sem depender de um backend real.
+-   Isolar testes de componentes específicos que consomem a API.
+
+**Como iniciar o servidor de mock:**
+
+O servidor é iniciado utilizando o seguinte comando NPM:
+```bash
+npm run mock-server
+```
+Por padrão, o servidor iniciará na porta **4010**.
+
+**Configurando a Porta:**
+
+Você pode especificar uma porta diferente para o servidor de mock de duas maneiras:
+
+1.  **Via variável de ambiente `PORT`:**
+    A variável de ambiente `PORT` tem precedência sobre o argumento de linha de comando.
+    ```bash
+    PORT=4011 npm run mock-server
+    ```
+    O servidor será iniciado na porta `4011`.
+
+2.  **Via argumento de linha de comando `--port`:**
+    Utilize `--` para passar argumentos diretamente para o script `scripts/mock-server.js`.
+    ```bash
+    npm run mock-server -- --port=4011
+    ```
+    O servidor será iniciado na porta `4011`.
+
+Se nenhuma porta for especificada através da variável de ambiente ou argumento de linha de comando, o servidor usará a porta padrão `4010`. O servidor também exibirá no console qual arquivo Swagger está sendo usado e em qual porta ele está rodando.
 
 ---
 
@@ -136,13 +181,23 @@ A estrutura do projeto é organizada da seguinte forma:
 
 O projeto emprega uma estratégia de testes em múltiplas camadas:
 
--   **Testes Unitários de API (Newman):** A coleção Postman gerada automaticamente (`generated-collection.json`) inclui testes básicos para cada endpoint (e.g., verificação de status code `2xx`). Estes são executados com `npm run test:unit`.
-    -   **Executando Endpoints/Pastas Individuais:** Atualmente, `npm run test:unit` executa a coleção inteira. Melhorias futuras podem incluir:
-        -   Uso da opção `--folder <folderName>` do Newman para rodar pastas específicas dentro da coleção.
-        -   Execução programática do Newman via sua biblioteca Node.js para controle mais granular.
--   **Testes de Comportamento (BDD - Cucumber.js):** Cenários de usuário e fluxos de negócio são definidos em Gherkin (`.feature`) e implementados em JavaScript. Executados com `npm run test:bdd`. Estes testes focam na perspectiva do usuário e podem cobrir interações mais complexas.
--   **Testes de Contrato (Schema Validation):** Embora não explicitamente implementado como um script separado, a validação de schema pode ser adicionada aos testes Newman ou BDD para garantir que as respostas da API sigam o contrato definido na especificação OpenAPI.
--   **Análise Estática:** Ferramentas como ESLint (se configuradas) ajudam a manter a qualidade e consistência do código.
+-   **Testes Unitários de API (Newman):** A coleção Postman gerada automaticamente (`generated-collection.json`) a partir da especificação OpenAPI é ideal para validar cada endpoint individualmente. Estes testes, executados com `npm run test:unit` (ou `npm run test:unit:folder <folderName>` para pastas específicas), verificam aspectos como status codes corretos (`2xx`) e a conformidade da estrutura da resposta com o schema JSON esperado (validação de contrato). Esta abordagem é excelente para garantir a saúde básica e a conformidade de cada endpoint da API.
+
+-   **Testes de Comportamento (BDD - Cucumber.js):** Para validar fluxos de usuário e cenários de negócio mais complexos, que podem envolver múltiplas interações com a API, utilizamos Cucumber.js. Os cenários são definidos em linguagem Gherkin (`.feature`) e os *step definitions* (passos) são implementados em JavaScript.
+    -   **Abordagem de Interação com a API:** Dentro dos *step definitions* do Cucumber, a interação com a API é realizada através de chamadas HTTP diretas, utilizando bibliotecas como `axios` (já inclusa no projeto). Esta abordagem oferece maior controle sobre as requisições e respostas, permite construir e manipular dados de forma programática entre os passos, e mantém os cenários BDD focados no comportamento do usuário, não na estrutura de uma coleção Postman. Tentar reutilizar requisições de uma coleção Postman diretamente dentro dos steps do Cucumber pode levar a um acoplamento desnecessário e dificultar a clareza dos testes de comportamento.
+    -   **Foco no Comportamento:** Os testes BDD devem descrever o comportamento do sistema da perspectiva do usuário (e.g., "Dado que um usuário está logado, Quando ele tenta criar um novo pedido com itens válidos, Então o pedido deve ser criado com sucesso"). A lógica de como cada passo interage com a API fica encapsulada nos *step definitions*.
+
+-   **Complementaridade entre Testes Newman e BDD:**
+    -   **Newman/Postman Collections:** Excelentes para testes de contrato, validação de schema por endpoint, e testes rápidos de regressão em nível de API individual. São gerados a partir do Swagger e garantem que cada "unidade" da API funcione conforme especificado.
+    -   **Cucumber.js (BDD):** Ideal para testes de integração de ponta a ponta (do ponto de vista da API), fluxos de usuário complexos, e cenários que envolvem múltiplos passos ou estados. Eles garantem que as diferentes partes da API trabalhem juntas corretamente para atender aos requisitos de negócio.
+
+-   **Testes de Contrato (Schema Validation):** A validação de schema é primariamente tratada pelos testes gerados na coleção Postman (executados via Newman). No entanto, validações específicas também podem ser adicionadas nos testes BDD se um determinado fluxo de comportamento depender crucialmente de uma estrutura de dados específica em um ponto intermediário.
+
+-   **Análise Estática:** Ferramentas como ESLint (se configuradas) ajudam a manter a qualidade e consistência do código dos próprios testes.
+
+-   **Massa de Dados para Testes:**
+    -   **Dados Estáticos:** Para dados de teste que raramente mudam ou que precisam ser consistentes entre as execuções, utilize arquivos JSON estáticos armazenados em `/tests/data/`. Veja `tests/data/README.md` para convenções de nomenclatura e estrutura.
+    -   **Dados Dinâmicos:** O projeto suporta a geração de massa de dados dinâmicos usando `@faker-js/faker` através do comando `npm run generate:data`. Isso é útil para criar uma grande variedade de entradas de teste e evitar a repetição de dados. Consulte a documentação em `tests/data/README.md` (seção "Geração Dinâmica de Massa de Dados") para detalhes sobre como gerar e utilizar esses dados em seus testes.
 
 ---
 
@@ -156,6 +211,13 @@ O projeto emprega uma estratégia de testes em múltiplas camadas:
 -   **Logs de Testes Unitários**: Logs detalhados da execução de `npm run test:unit` são salvos em `/artifacts/logs/unit-tests.log`, e um relatório JSON cru também é gerado em `/artifacts/logs/unit-tests-report.json`.
 
 Os relatórios Newman são gerados executando o comando `npm run report`.
+
+-   **Dashboard Agregado**:
+    -   Um dashboard HTML simples é gerado em `artifacts/reports/dashboard.html` através do comando `npm run report:dashboard`.
+    -   Este dashboard consolida os resultados dos testes unitários/Newman e dos testes de comportamento/Cucumber, fornecendo uma visão geral do status dos testes.
+    -   Ele exibe totais, passados, falhados e duração para cada tipo de teste, além de um resumo geral.
+    -   O dashboard também inclui um link para o relatório HTML detalhado do Newman (`html-report.html`), se disponível.
+    -   **Pré-requisitos:** Para que o dashboard reflita o estado mais recente, certifique-se de executar `npm run test:unit` (para gerar `unit-tests-report.json`), `npm run test:bdd` (para gerar `bdd-report.json`), e `npm run report` (para gerar `html-report.html` que é linkado) *antes* de executar `npm run report:dashboard`.
 
 ---
 
