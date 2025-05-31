@@ -6,16 +6,17 @@
     "scripts": {
         "test": "jest && cucumber-js",
         "generate:data": "node scripts/generators/example.js",
-        "prereport": "mkdirp artifacts/reports",
-        "report": "newman run artifacts/collections/generated-collection.json -r cli,junit,htmlextra --reporter-junit-export artifacts/reports/junit-report.xml --reporter-htmlextra-export artifacts/reports/html-report.html --reporter-htmlextra-showOnlyFails --reporter-htmlextra-testPaging --env-var \"baseUrl=http://localhost:3000\"",
+        "prepare-env": "node scripts/setup/prepare-newman-env.js",
+        "prereport": "npm run prepare-env && mkdirp artifacts/reports",
+        "report": "newman run artifacts/collections/generated-collection.json -r cli,junit,htmlextra --reporter-junit-export artifacts/reports/junit-report.xml --reporter-htmlextra-export artifacts/reports/html-report.html --reporter-htmlextra-showOnlyFails --reporter-htmlextra-testPaging --environment artifacts/environments/newman_env.json",
         "monitor:queues": "node core/monitoring/index.js",
         "setup": "node scripts/setup/example.js",
         "doc": "jsdoc -c jsdoc.json",
         "import-swagger": "node core/swagger/index.js --file",
         "generate-collection": "node core/builders/index.js",
-        "pretest:unit": "mkdirp artifacts/logs",
-        "test:unit": "newman run artifacts/collections/generated-collection.json -r cli,json --reporter-json-export artifacts/logs/unit-tests-report.json --env-var \"baseUrl=http://localhost:3000\" > artifacts/logs/unit-tests.log 2>&1",
-        "test:unit:folder": "newman run artifacts/collections/generated-collection.json -r cli,json --reporter-json-export artifacts/logs/unit-tests-folder-report.json --env-var \"baseUrl=http://localhost:3000\" --folder > artifacts/logs/unit-tests-folder.log 2>&1",
+        "pretest:unit": "npm run prepare-env && mkdirp artifacts/logs",
+        "test:unit": "newman run artifacts/collections/generated-collection.json -r cli,json --reporter-json-export artifacts/logs/unit-tests-report.json --environment artifacts/environments/newman_env.json > artifacts/logs/unit-tests.log 2>&1",
+        "test:unit:folder": "newman run artifacts/collections/generated-collection.json -r cli,json --reporter-json-export artifacts/logs/unit-tests-folder-report.json --environment artifacts/environments/newman_env.json --folder > artifacts/logs/unit-tests-folder.log 2>&1",
         "test:bdd": "cucumber-js tests/bdd/features/**/*.feature --require tests/bdd/step-definitions/**/*.js --require tests/bdd/support/**/*.js --format json:artifacts/logs/bdd-report.json",
         "report:dashboard": "node scripts/generate-dashboard.js",
         "report:open": "open artifacts/reports/html-report.html || xdg-open artifacts/reports/html-report.html",
@@ -28,6 +29,7 @@
         "axios": "^1.9.0",
         "dotenv": "^16.0.0",
         "jest": "^29.0.0",
+        "js-yaml": "^4.1.0",
         "newman": "^6.0.0",
         "openapi-to-postmanv2": "^5.0.0",
         "swagger-parser": "^10.0.2",
@@ -40,7 +42,8 @@
         "jsdoc": "^4.0.0",
         "mkdirp": "^3.0.1",
         "newman-reporter-htmlextra": "^1.23.1",
-        "prettier": "^3.0.0"
+        "prettier": "^3.0.0",
+        "uuid": "^9.0.1"
     },
     "engines": {
         "node": "18.20.1"
