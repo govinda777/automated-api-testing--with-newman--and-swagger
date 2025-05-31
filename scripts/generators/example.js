@@ -14,7 +14,7 @@ function createRandomUser() {
     firstName: faker.person.firstName(),
     lastName: faker.person.lastName(),
     avatar: faker.image.avatar(),
-    password: faker.internet.password({ length: 12, memorable: false, pattern: /[A-Za-z0-9!@#$%^&*()]/ }),
+    password: "GENERATED_PASSWORD",
     birthdate: faker.date.birthdate(),
     registeredAt: faker.date.past({ years: 5 }),
     address: {

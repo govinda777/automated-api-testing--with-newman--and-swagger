@@ -1,7 +1,7 @@
 {
   "item": [
     {
-      "id": "a06edcee-e4a8-4c90-b2a6-12f3b5fbec76",
+      "id": "beefc5c0-87e2-4c4f-9bf9-9147fe6db144",
       "name": "List all users",
       "request": {
         "name": "List all users",
@@ -27,7 +27,7 @@
       },
       "response": [
         {
-          "id": "9631caf8-c617-4d85-aec3-aec33ebaa767",
+          "id": "763ce194-752f-4848-934b-6ad3ea918e23",
           "name": "A list of users",
           "originalRequest": {
             "url": {
@@ -57,7 +57,7 @@
               "value": "application/json"
             }
           ],
-          "body": "[\n  {\n    \"id\": 1730838,\n    \"name\": \"ut magna consequat\"\n  },\n  {\n    \"id\": -53222614,\n    \"name\": \"ex ut in minim dolore\"\n  }\n]",
+          "body": "[\n  {\n    \"id\": -93424760,\n    \"name\": \"sunt dolor\"\n  },\n  {\n    \"id\": -82645866,\n    \"name\": \"proident Ut culpa esse\"\n  }\n]",
           "cookie": [],
           "_postman_previewlanguage": "json"
         }
@@ -69,6 +69,33 @@
             "exec": [
               "pm.test(\"Status code is 2xx\", function () {",
               "    pm.response.to.be.success;",
+              "});",
+              "",
+              "pm.test(\"Schema is valid\", function() {",
+              "    // Attempt to get the schema from the response definition in the collection",
+              "    // openapi-to-postmanv2 might store the expected response schema here",
+              "    if (pm.item.responses && pm.item.responses.members && pm.item.responses.members[0] && pm.item.responses.members[0].body) {",
+              "        let expectedSchema = pm.item.responses.members[0].body;",
+              "        if (expectedSchema) {",
+              "            try {",
+              "                // Assuming the schema is a JSON string, it needs to be parsed",
+              "                let schema = JSON.parse(expectedSchema);",
+              "                pm.response.to.have.jsonSchema(schema);",
+              "            } catch (e) {",
+              "                console.error(\"Failed to parse schema or schema not found for this request. Schema string: \" + expectedSchema, e);",
+              "                // Fail the test if schema cannot be parsed or is invalid",
+              "                pm.expect(false, \"Schema parsing/validation failed: \" + e.message).to.be.true;",
+              "            }",
+              "        } else {",
+              "            // If no schema is defined for the response, log it.",
+              "            // Depending on requirements, this could be a failing test.",
+              "            console.log(\"No schema found for this response in the collection definition.\");",
+              "        }",
+              "    } else {",
+              "        console.log(\"No response schema definition found in pm.item.responses for this request.\");",
+              "        // Optionally, fail the test if a schema is always expected.",
+              "        // pm.expect(false, \"Response schema definition missing in collection\").to.be.true;",
+              "    }",
               "});"
             ],
             "type": "text/javascript"
@@ -89,7 +116,7 @@
     }
   ],
   "info": {
-    "_postman_id": "656641ee-a18b-4c3b-a310-9122bc0271eb",
+    "_postman_id": "281980ef-1364-41bd-adf9-6651d8f28dd7",
     "name": "Sample API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": {
