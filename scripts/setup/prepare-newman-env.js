@@ -1,7 +1,7 @@
 const fs = require('fs');
 const yaml = require('js-yaml');
 const path = require('path');
-const { mkdirp } = require('mkdirp'); // Corrected import for mkdirp
+const mkdirp = require('mkdirp'); // Corrected import for mkdirp
 const { v4: uuidv4 } = require('uuid'); // For generating UUID
 
 console.log('Starting Newman environment preparation...');
