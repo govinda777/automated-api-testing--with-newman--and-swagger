@@ -1,0 +1,56 @@
+
+> automated-api-testing@1.0.0 test:bdd
+> npx cucumber-js tests/bdd/features/**/*.feature --require tests/bdd/step-definitions/**/*.js --require tests/bdd/support/**/*.js --format json:artifacts/logs/bdd-report.json
+
+Starting BDD tests...
+Attempting to load configuration from: /app/config/environments/development.yaml
+Loaded configuration from /app/config/environments/development.yaml
+BASE_URL set to: http://localhost:1234/api/dev
+API_KEY set from /app/config/environments/development.yaml.
+
+Starting scenario: Registrar múltiplos usuários dinâmicos a partir de arquivo
+.F--Finished scenario: Registrar múltiplos usuários dinâmicos a partir de arquivo - Status: FAILED
+Error in scenario: AssertionError [ERR_ASSERTION]: Arquivo de dados não encontrado: /app/tests/data/generated/dynamic-users.json. Execute 'npm run generate:data' primeiro.
+    + expected - actual
+
+    -false
+    +true
+
+    at World.<anonymous> (/app/tests/bdd/step-definitions/dynamicDataUsage.steps.js:13:3)
+--------------------------------------------------
+.
+Starting scenario: Successful User Registration
+..Mock POST to /users/register with data: {
+  name: 'Test User',
+  email: 'testuser@example.com',
+  password: 'password123'
+}
+...Finished scenario: Successful User Registration - Status: PASSED
+--------------------------------------------------
+.
+Starting scenario: Successful User Login
+..Mock POST to /users/login with data: { email: 'registered@example.com', password: 'password123' }
+...Finished scenario: Successful User Login - Status: PASSED
+--------------------------------------------------
+.BDD tests completed.
+
+
+Failures:
+
+1) Scenario: Registrar múltiplos usuários dinâmicos a partir de arquivo # tests/bdd/features/dynamicDataUsage.feature:4
+   ✔ Before # tests/bdd/support/hooks.js:65
+   ✖ Given o arquivo de dados de usuários dinâmicos "dynamic-users.json" está disponível # tests/bdd/step-definitions/dynamicDataUsage.steps.js:11
+       AssertionError [ERR_ASSERTION]: Arquivo de dados não encontrado: /app/tests/data/generated/dynamic-users.json. Execute 'npm run generate:data' primeiro.
+           + expected - actual
+
+           -false
+           +true
+
+           at World.<anonymous> (/app/tests/bdd/step-definitions/dynamicDataUsage.steps.js:13:3)
+   - When eu processo o registro para cada usuário dinâmico contido no arquivo # tests/bdd/step-definitions/dynamicDataUsage.steps.js:26
+   - Then cada tentativa de registro de usuário dinâmico do arquivo deve ser reportada como processada # tests/bdd/step-definitions/dynamicDataUsage.steps.js:49
+   ✔ After # tests/bdd/support/hooks.js:72
+
+3 scenarios (1 failed, 2 passed)
+11 steps (1 failed, 2 skipped, 8 passed)
+0m00.089s (executing steps: 0m00.011s)

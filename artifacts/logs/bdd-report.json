@@ -1,0 +1,248 @@
+[
+  {
+    "description": "  Demonstra o uso de dados de usuários gerados dinamicamente em cenários BDD.",
+    "elements": [
+      {
+        "description": "",
+        "id": "utilização-de-dados-dinâmicos;registrar-múltiplos-usuários-dinâmicos-a-partir-de-arquivo",
+        "keyword": "Scenario",
+        "line": 4,
+        "name": "Registrar múltiplos usuários dinâmicos a partir de arquivo",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 509616
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 5,
+            "name": "o arquivo de dados de usuários dinâmicos \"dynamic-users.json\" está disponível",
+            "match": {
+              "location": "tests/bdd/step-definitions/dynamicDataUsage.steps.js:11"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 697031
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 6,
+            "name": "eu processo o registro para cada usuário dinâmico contido no arquivo",
+            "match": {
+              "location": "tests/bdd/step-definitions/dynamicDataUsage.steps.js:26"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 1988824
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 7,
+            "name": "cada tentativa de registro de usuário dinâmico do arquivo deve ser reportada como processada",
+            "match": {
+              "location": "tests/bdd/step-definitions/dynamicDataUsage.steps.js:49"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 369001
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 230476
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      }
+    ],
+    "id": "utilização-de-dados-dinâmicos",
+    "line": 1,
+    "keyword": "Feature",
+    "name": "Utilização de Dados Dinâmicos",
+    "tags": [],
+    "uri": "tests/bdd/features/dynamicDataUsage.feature"
+  },
+  {
+    "description": "  As a user\n  I want to be able to register and login\n  So that I can access protected resources",
+    "elements": [
+      {
+        "description": "",
+        "id": "user-authentication;successful-user-registration",
+        "keyword": "Scenario",
+        "line": 6,
+        "name": "Successful User Registration",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 84327
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 7,
+            "name": "I am a new user with valid registration details",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:26"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 142375
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 8,
+            "name": "I send a POST request to \"/api/users/register\" with my details",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:39"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 4911823
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 9,
+            "name": "the response status code should be 201",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:49"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 373524
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "And ",
+            "line": 10,
+            "name": "the response should contain a user ID and a success message",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:53"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 138170
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 256673
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "user-authentication;successful-user-login",
+        "keyword": "Scenario",
+        "line": 12,
+        "name": "Successful User Login",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 84505
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Given ",
+            "line": 13,
+            "name": "I am a registered user with valid credentials",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:32"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 154793
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "When ",
+            "line": 14,
+            "name": "I send a POST request to \"/api/users/login\" with my credentials",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:44"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 456821
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 15,
+            "name": "the response status code should be 200",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:49"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 77585
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "And ",
+            "line": 16,
+            "name": "the response should contain an authentication token",
+            "match": {
+              "location": "tests/bdd/step-definitions/userAuthentication.steps.js:58"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 121417
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 74314
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      }
+    ],
+    "id": "user-authentication",
+    "line": 1,
+    "keyword": "Feature",
+    "name": "User Authentication",
+    "tags": [],
+    "uri": "tests/bdd/features/userAuthentication.feature"
+  }
+]

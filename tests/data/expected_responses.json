@@ -1,0 +1,15 @@
+{
+  "GET /users": {
+    "status": 200,
+    "body": [
+      {
+        "id": -93424760,
+        "name": "sunt dolor"
+      },
+      {
+        "id": -82645866,
+        "name": "proident Ut culpa esse"
+      }
+    ]
+  }
+}

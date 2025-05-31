@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites name="Sample API" tests="1" time="0.000">
-  <testsuite name="List all users" id="a06edcee-e4a8-4c90-b2a6-12f3b5fbec76" timestamp="2025-05-31T22:01:11.579Z" tests="1" failures="1" errors="1" time="0.000">
+  <testsuite name="List all users" id="beefc5c0-87e2-4c4f-9bf9-9147fe6db144" timestamp="2025-05-31T22:35:59.739Z" tests="2" failures="2" errors="1" time="0.000">
     <system-err><![CDATA[Iteration: 0
 RequestError: Error: connect ECONNREFUSED 127.0.0.1:1234
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1549:16)
@@ -10,13 +10,25 @@ RequestError: Error: connect ECONNREFUSED 127.0.0.1:1234
     <testcase name="Status code is 2xx" time="0.000" classname="ListAllUsers">
       <failure type="AssertionFailure" message="expected PostmanResponse{ …(5) } to have property 'code'">
         <![CDATA[Failed 1 times.]]>
-        <![CDATA[Collection JSON ID: 656641ee-a18b-4c3b-a310-9122bc0271eb.]]>
+        <![CDATA[Collection JSON ID: 281980ef-1364-41bd-adf9-6651d8f28dd7.]]>
         <![CDATA[Collection name: Sample API.]]>
         <![CDATA[Request name: List all users.]]>
         <![CDATA[Test description: Status code is 2xx.]]>
         <![CDATA[Error message: expected PostmanResponse{ …(5) } to have property 'code'.]]>
         <![CDATA[Stacktrace: AssertionError: expected PostmanResponse{ …(5) } to have property 'code'
    at Object.eval sandbox-script.js:1:1).]]>
+      </failure>
+    </testcase>
+    <testcase name="Schema is valid" time="0.000" classname="ListAllUsers">
+      <failure type="AssertionFailure" message="Cannot read properties of undefined (reading 'responses')">
+        <![CDATA[Failed 1 times.]]>
+        <![CDATA[Collection JSON ID: 281980ef-1364-41bd-adf9-6651d8f28dd7.]]>
+        <![CDATA[Collection name: Sample API.]]>
+        <![CDATA[Request name: List all users.]]>
+        <![CDATA[Test description: Schema is valid.]]>
+        <![CDATA[Error message: Cannot read properties of undefined (reading 'responses').]]>
+        <![CDATA[Stacktrace: TypeError: Cannot read properties of undefined (reading 'responses')
+   at Object.eval sandbox-script.js:2:1).]]>
       </failure>
     </testcase>
   </testsuite>

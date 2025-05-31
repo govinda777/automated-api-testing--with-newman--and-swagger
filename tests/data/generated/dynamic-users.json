@@ -1,0 +1,117 @@
+[
+  {
+    "userId": "7929f650-e993-4f1f-a770-9ae9e318f907",
+    "username": "Julia.Maggio61",
+    "email": "Antonietta74@yahoo.com",
+    "firstName": "Louie",
+    "lastName": "Luettgen",
+    "avatar": "https://avatars.githubusercontent.com/u/18182077",
+    "password": "qv)d4Rk8OpE8",
+    "birthdate": "1969-10-21T09:15:25.578Z",
+    "registeredAt": "2020-11-05T16:28:58.196Z",
+    "address": {
+      "street": "3308 Franklin Avenue",
+      "city": "New Bernard",
+      "state": "NH",
+      "zipCode": "31874-6174",
+      "country": "TO"
+    },
+    "phone": "422-599-4430 x00720",
+    "company": {
+      "name": "Howe - Satterfield",
+      "catchPhrase": "Programmable asymmetric complexity"
+    }
+  },
+  {
+    "userId": "03e954a3-2ed5-4756-a2fe-1d2d8bf707b6",
+    "username": "Larue94",
+    "email": "Pansy53@hotmail.com",
+    "firstName": "Ellsworth",
+    "lastName": "Pfannerstill",
+    "avatar": "https://avatars.githubusercontent.com/u/35780962",
+    "password": "wNrl4ULzUOu&",
+    "birthdate": "2003-03-30T13:29:07.181Z",
+    "registeredAt": "2022-10-01T03:43:29.276Z",
+    "address": {
+      "street": "76292 Shana Tunnel",
+      "city": "South Cale",
+      "state": "TX",
+      "zipCode": "31805",
+      "country": "LV"
+    },
+    "phone": "581-359-8065 x2433",
+    "company": {
+      "name": "Cummerata Inc",
+      "catchPhrase": "Reduced zero defect workforce"
+    }
+  },
+  {
+    "userId": "4c65c1fb-f4ae-494d-b744-1eeff5a6a880",
+    "username": "Carlos_Zemlak84",
+    "email": "Elissa_Graham8@yahoo.com",
+    "firstName": "Kip",
+    "lastName": "Ruecker",
+    "avatar": "https://avatars.githubusercontent.com/u/13162059",
+    "password": "!AvNFr3bS!WB",
+    "birthdate": "1995-06-05T03:01:22.387Z",
+    "registeredAt": "2021-09-25T21:20:31.644Z",
+    "address": {
+      "street": "414 Heaney Lock",
+      "city": "Pueblo",
+      "state": "MO",
+      "zipCode": "41455-3551",
+      "country": "AS"
+    },
+    "phone": "(843) 953-1938 x3986",
+    "company": {
+      "name": "Marks Inc",
+      "catchPhrase": "Innovative local emulation"
+    }
+  },
+  {
+    "userId": "9293ae43-c3ac-4a86-a88e-3a15fa3a8d12",
+    "username": "Sheldon77",
+    "email": "Ramona.Simonis@yahoo.com",
+    "firstName": "Emery",
+    "lastName": "West",
+    "avatar": "https://avatars.githubusercontent.com/u/50052096",
+    "password": "XDjEJq1Ij@O^",
+    "birthdate": "1989-01-29T08:04:08.472Z",
+    "registeredAt": "2024-06-14T02:55:01.678Z",
+    "address": {
+      "street": "1836 Park Drive",
+      "city": "West Joshuahworth",
+      "state": "MI",
+      "zipCode": "58413-7966",
+      "country": "AZ"
+    },
+    "phone": "1-399-643-8395 x6122",
+    "company": {
+      "name": "Quitzon, Ferry and Bashirian",
+      "catchPhrase": "Digitized fresh-thinking encoding"
+    }
+  },
+  {
+    "userId": "a9196a0a-7097-42c1-9897-b25730895ce9",
+    "username": "Hugh.Osinski",
+    "email": "Lou.McCullough@gmail.com",
+    "firstName": "Isaias",
+    "lastName": "Kub",
+    "avatar": "https://cdn.jsdelivr.net/gh/faker-js/assets-person-portrait/female/512/22.jpg",
+    "password": "I#qts9MEB$bl",
+    "birthdate": "1949-04-15T18:19:18.891Z",
+    "registeredAt": "2020-09-30T22:59:47.827Z",
+    "address": {
+      "street": "56465 Elizabeth Avenue",
+      "city": "Littlestead",
+      "state": "ID",
+      "zipCode": "50269",
+      "country": "AU"
+    },
+    "phone": "(291) 261-1660 x847",
+    "company": {
+      "name": "Schuster, Halvorson and Miller",
+      "catchPhrase": "Intuitive explicit capacity"
+    }
+  }
+]
