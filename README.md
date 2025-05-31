@@ -99,13 +99,13 @@ A estrutura do projeto é organizada da seguinte forma:
     ```bash
     npm run test:unit
     ```
-    *Nota:* Este comando utiliza um `baseUrl` padrão (`http://localhost:3000`). Se sua API estiver rodando em um local diferente, você precisará ajustar o `baseUrl` na coleção gerada ou usar variáveis de ambiente (veja [Configuração de Ambiente](#configuração-de-ambiente)).
+    *Nota:* A URL base e outras configurações para os testes de API serão carregadas a partir do arquivo de ambiente correspondente (e.g., `development.yaml` ou o especificado por `TEST_ENV` - veja [Configuração de Ambiente](#configuração-de-ambiente)).
 4.  **Executar Testes BDD:**
     Execute os cenários de BDD definidos com Cucumber.js.
     ```bash
     npm run test:bdd
     ```
-    *Nota:* Os testes BDD podem interagir com uma API real. Certifique-se que a API alvo esteja configurada e acessível. A configuração de `BASE_URL` para os testes BDD pode ser gerenciada via variáveis de ambiente ou diretamente nos step definitions.
+    *Nota:* Os testes BDD também utilizarão as configurações do ambiente ativo (e.g., `BASE_URL` definida em `process.env` pelo `hooks.js` - veja [Configuração de Ambiente](#configuração-de-ambiente)). Certifique-se que a API alvo esteja configurada e acessível.
 5.  **Gerar e Visualizar Relatórios:**
     Gere relatórios consolidados dos testes de API.
     ```bash
@@ -126,12 +126,12 @@ A estrutura do projeto é organizada da seguinte forma:
 -   `npm run generate-collection`: Gera uma coleção Postman a partir do `/core/swagger/swagger.yaml` e a salva em `/artifacts/collections/generated-collection.json`, adicionando testes básicos para cada request (status code, validação de schema).
 -   `npm run generate:data`: Executa o script `scripts/generators/example.js` para gerar massa de dados de teste dinâmica usando `@faker-js/faker`. Os dados são salvos, por padrão, em `tests/data/generated/dynamic-users.json`. Veja `tests/data/README.md` para mais detalhes sobre como usar e customizar a geração de dados.
 -   `npm run test`: Executa testes Jest (se houver) e testes Cucumber.js (BDD). (Comportamento padrão original, pode ser ajustado).
--   `npm run test:unit`: Executa a coleção Postman gerada (`generated-collection.json`) com Newman, gerando um relatório JSON e um log de console em `/artifacts/logs/`. Utiliza `http://localhost:3000` como `baseUrl` por padrão.
--   `npm run test:unit:folder <folderName>`: Executa apenas uma pasta específica dentro da coleção Postman gerada. Substitua `<folderName>` pelo nome exato da pasta na coleção (e.g., "User Management"). Gera um relatório JSON (`unit-tests-folder-report.json`) e um log de console (`unit-tests-folder.log`) em `/artifacts/logs/`.
-    -   Exemplo: `npm run test:unit:folder "User Management"`
--   `npm run test:bdd`: Executa os testes BDD usando Cucumber.js localizados em `/tests/bdd/features/`.
--   `npm run report`: Gera relatórios de teste consolidados (JUnit XML e HTMLEXTRA HTML) em `/artifacts/reports/` a partir da execução da coleção `generated-collection.json`.
--   `npm run report:dashboard`: Gera um dashboard HTML agregado (`artifacts/reports/dashboard.html`) a partir dos resultados JSON dos testes Newman e Cucumber. **Importante:** Execute `npm run test:unit`, `npm run test:bdd`, e `npm run report` *antes* deste comando para garantir que os dados de origem e links estejam corretos e atualizados.
+-   `npm run test:unit`: Executa a coleção Postman gerada (`generated-collection.json`) com Newman, utilizando o ambiente configurado via `TEST_ENV` (padrão: `development`). Gera um relatório JSON e um log de console em `/artifacts/logs/`.
+-   `npm run test:unit:folder <folderName>`: Executa apenas uma pasta específica dentro da coleção Postman gerada, utilizando o ambiente configurado. Substitua `<folderName>` pelo nome exato da pasta na coleção.
+    -   Exemplo: `TEST_ENV=staging npm run test:unit:folder "User Management"`
+-   `npm run test:bdd`: Executa os testes BDD (Cucumber.js) localizados em `/tests/bdd/features/`, utilizando o ambiente configurado via `TEST_ENV`.
+-   `npm run report`: Gera relatórios de teste consolidados (JUnit XML e HTMLEXTRA HTML) em `/artifacts/reports/` a partir da execução da coleção `generated-collection.json`, utilizando o ambiente configurado via `TEST_ENV`.
+-   `npm run report:dashboard`: Gera um dashboard HTML agregado (`artifacts/reports/dashboard.html`) a partir dos resultados JSON dos testes Newman e Cucumber. **Importante:** Execute `npm run test:unit`, `npm run test:bdd`, e `npm run report` (todos com o `TEST_ENV` desejado, se aplicável) *antes* deste comando para garantir que os dados de origem e links estejam corretos e atualizados.
 -   `npm run report:open`: Tenta abrir o relatório HTML (`html-report.html`) no navegador padrão.
 -   `npm run doc`: Gera documentação JSDoc (se configurado).
 -   `npm run mock-server`: Inicia o servidor de mock da API utilizando o Prism. Veja a seção [Servidor de Mock (Mock Server)](#servidor-de-mock-mock-server) para mais detalhes.
@@ -174,6 +174,8 @@ Você pode especificar uma porta diferente para o servidor de mock de duas manei
     O servidor será iniciado na porta `4011`.
 
 Se nenhuma porta for especificada através da variável de ambiente ou argumento de linha de comando, o servidor usará a porta padrão `4010`. O servidor também exibirá no console qual arquivo Swagger está sendo usado e em qual porta ele está rodando.
+
+É importante notar que, atualmente, o servidor de mock não detecta automaticamente alterações no arquivo `core/swagger/swagger.yaml` enquanto está em execução. Se você modificar a especificação da API, precisará reiniciar manualmente o servidor de mock (Ctrl+C e depois `npm run mock-server`) para que as alterações tenham efeito.
 
 ---
 
@@ -223,43 +225,69 @@ Os relatórios Newman são gerados executando o comando `npm run report`.
 
 ## Configuração de Ambiente
 
-O diretório `/config/environments/` é destinado a armazenar configurações específicas de ambiente (e.g., `baseUrl`, chaves de API, credenciais de teste) em arquivos YAML.
+Este projeto suporta configurações de ambiente dinâmicas para adaptar os testes a diferentes cenários (desenvolvimento, staging, produção, etc.). A configuração é controlada pela variável de ambiente `TEST_ENV`.
 
--   **`example.yaml`**: Serve como um modelo. Copie e renomeie este arquivo para seus ambientes específicos (e.g., `development.yaml`, `staging.yaml`, `production.yaml`).
+**Arquivos de Configuração YAML:**
+
+-   As configurações específicas de cada ambiente são definidas em arquivos YAML localizados em `config/environments/`.
+-   Por exemplo:
+    -   `config/environments/development.yaml` (usado por padrão se `TEST_ENV` não estiver definida)
+    -   `config/environments/staging.yaml`
+    -   `config/environments/example.yaml` (serve como modelo)
+-   Cada arquivo YAML pode conter pares chave-valor, como `baseUrl`, `apiKey`, etc.
     ```yaml
-    # example.yaml
-    baseUrl: "http://localhost:3000/api/v1"
-    apiKey: "your_api_key_here"
+    # config/environments/development.yaml
+    environmentName: "Development"
+    baseUrl: "http://localhost:1234/api/dev"
+    apiKey: "dev_api_key_123"
     timeout: 5000
-    # Adicione outras variáveis conforme necessário
     ```
 
--   **Uso em Testes:**
-    -   Atualmente, a integração direta destes arquivos YAML nos scripts de teste (Newman, Cucumber) não é automatizada de forma genérica.
-    -   Para Newman, a `baseUrl` e outras variáveis são passadas diretamente no comando (e.g., `npm run test:unit` usa `--env-var "baseUrl=http://localhost:3000"`). Uma abordagem mais robusta seria gerar ou usar [Ambientes Postman](https://learning.postman.com/docs/sending-requests/variables/#managing-environments) que podem ser populados a partir destes arquivos YAML através de scripts customizados.
-    -   Para Cucumber.js (testes BDD), você pode carregar estas configurações usando um parser YAML (como o pacote `yaml` já incluído) e `dotenv` no início dos seus testes (e.g., em `support/hooks.js` ou um arquivo de setup específico) e disponibilizá-las globalmente ou através do World context do Cucumber.
-        ```javascript
-        // Exemplo em support/hooks.js ou similar
-        // const fs = require('fs');
-        // const yaml = require('yaml');
-        // const path = require('path');
-        //
-        // BeforeAll(function() {
-        //   const env = process.env.TEST_ENV || 'development'; // Default to development
-        //   const configPath = path.resolve(__dirname, `../../../config/environments/${env}.yaml`);
-        //   try {
-        //     const fileContents = fs.readFileSync(configPath, 'utf8');
-        //     const config = yaml.parse(fileContents);
-        //     process.env.BASE_URL = config.baseUrl; // Make it available as env var
-        //     // this.config = config; // Make it available in Cucumber world
-        //     console.log(`Loaded configuration for environment: ${env}`);
-        //   } catch (error) {
-        //     console.error(`Failed to load configuration for environment: ${env}`, error);
-        //     // Decide se deve prosseguir ou falhar os testes
-        //   }
-        // });
-        ```
-    -   É crucial **não commitar arquivos de ambiente com dados sensíveis** (como chaves de API de produção) no repositório. Use `.gitignore` para excluir arquivos como `production.yaml` e gerencie-os de forma segura (e.g., através de secrets em CI/CD).
+**Seleção do Ambiente:**
+
+-   A variável de ambiente `TEST_ENV` determina qual arquivo de configuração é carregado.
+    -   Se `TEST_ENV` for definida (ex: `TEST_ENV=staging`), o arquivo `config/environments/staging.yaml` será usado.
+    -   Se `TEST_ENV` não for definida, o sistema usará `development` como padrão, carregando `config/environments/development.yaml`.
+
+**Uso em Testes Cucumber (BDD):**
+
+-   O script `tests/bdd/support/hooks.js` é responsável por carregar o arquivo YAML do ambiente ativo no início da execução dos testes Cucumber.
+-   Ele lê o arquivo YAML correspondente (baseado em `TEST_ENV` ou o padrão 'development').
+-   As variáveis do arquivo YAML (como `baseUrl`, `apiKey`) são então injetadas como variáveis de ambiente (`process.env.BASE_URL`, `process.env.API_KEY`, etc.).
+-   Isso torna as configurações do ambiente facilmente acessíveis dentro dos seus step definitions.
+    ```javascript
+    // Exemplo de acesso em um step definition:
+    // const apiUrl = process.env.BASE_URL + '/users';
+    // const currentApiKey = process.env.API_KEY;
+    ```
+
+**Uso em Testes Newman (Unitários de API):**
+
+-   Para os testes Newman (comandos `npm run test:unit`, `npm run report`), a configuração de ambiente é gerenciada pelo script `scripts/setup/prepare-newman-env.js`.
+-   Este script é executado automaticamente como parte dos scripts `pretest:unit` e `prereport` (definidos em `package.json`).
+-   **Funcionamento:**
+    1.  O script `prepare-newman-env.js` lê o arquivo YAML do ambiente ativo (baseado em `TEST_ENV` ou o padrão 'development'), da mesma forma que os hooks do Cucumber.
+    2.  Ele transforma o conteúdo do YAML em um arquivo de ambiente no formato JSON compatível com Postman/Newman.
+    3.  Este arquivo JSON é salvo em `artifacts/environments/newman_env.json`.
+-   Os comandos Newman em `package.json` (como `test:unit` e `report`) são configurados para usar este arquivo JSON gerado através do argumento `--environment artifacts/environments/newman_env.json`. Isso elimina a necessidade de passar variáveis como `--env-var "baseUrl=..."` diretamente na linha de comando para Newman.
+
+**Exemplo de Uso:**
+
+-   Para usar o ambiente de desenvolvimento (padrão):
+    ```bash
+    npm run test:unit
+    npm run test:bdd
+    ```
+-   Para usar um ambiente chamado `staging` (assumindo que `config/environments/staging.yaml` existe):
+    ```bash
+    TEST_ENV=staging npm run test:unit
+    TEST_ENV=staging npm run test:bdd
+    TEST_ENV=staging npm run report
+    ```
+
+**Importante:**
+-   Lembre-se de criar os arquivos YAML correspondentes em `config/environments/` para cada ambiente que você deseja suportar.
+-   **Não commite arquivos de ambiente com dados sensíveis** (como chaves de API de produção) no repositório. Use `.gitignore` para excluir arquivos específicos (e.g., `production.yaml`) e gerencie-os de forma segura, por exemplo, através de secrets em seu sistema de CI/CD.
 
 ---
 

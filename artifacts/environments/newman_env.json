@@ -1,0 +1,27 @@
+{
+  "id": "647d3012-23cb-4981-a0e4-0e1928ba700e",
+  "name": "Generated example Environment",
+  "values": [
+    {
+      "key": "environment",
+      "value": "dev",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "apiKey",
+      "value": "SUA_API_KEY_AQUI",
+      "enabled": true,
+      "type": "default"
+    }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2025-05-31T21:36:25.393Z",
+  "_postman_exported_using": "Newman/Automated Script v1.0"
+}
