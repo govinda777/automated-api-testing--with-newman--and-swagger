@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites name="Sample API" tests="1" time="0.000">
-  <testsuite name="List all users" id="a06edcee-e4a8-4c90-b2a6-12f3b5fbec76" timestamp="2025-05-30T12:18:29.061Z" tests="1" failures="1" errors="1" time="0.000">
+  <testsuite name="List all users" id="a06edcee-e4a8-4c90-b2a6-12f3b5fbec76" timestamp="2025-05-31T22:01:11.579Z" tests="1" failures="1" errors="1" time="0.000">
     <system-err><![CDATA[Iteration: 0
-RequestError: Error: connect ECONNREFUSED 127.0.0.1:3000
+RequestError: Error: connect ECONNREFUSED 127.0.0.1:1234
     at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1549:16)
 
 ---
