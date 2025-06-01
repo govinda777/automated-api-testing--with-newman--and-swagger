@@ -22,24 +22,6 @@ show_status() {
     echo "==================================================="
 }
 
-# Função para limpar o ambiente
-cleanup_environment() {
-    show_status "Limpando ambiente..."
-    
-    # Mata qualquer processo na porta 4010
-    echo "Encerrando processos na porta $MOCK_PORT..."
-    sudo lsof -ti :$MOCK_PORT | xargs kill -9 || true
-    
-    # Para qualquer container existente
-    echo "Parando e removendo container do mock server..."
-    docker stop api-mock-server || true
-    docker rm api-mock-server || true
-    
-    # Limpa a imagem antiga
-    echo "Limpando imagem Docker antiga..."
-    docker rmi $DOCKER_IMAGE || true
-}
-
 # Função para verificar se o Docker está instalado
 check_docker() {
     if ! command -v docker &> /dev/null; then
@@ -89,195 +71,124 @@ check_docker_login() {
 }
 
 # Função para verificar se o mock server está pronto
-check_mock_server() {
-    echo "\nValidando se o mock server está pronto..."
+check_mock_ready() {
+    local port=$1
+    local max_attempts=10
+    local attempt=1
     
-    # Executa o script de validação
-    if ! node scripts/validate-mock-server.js; then
-        echo "Erro: Mock server não ficou pronto após várias tentativas"
+    while [ $attempt -le $max_attempts ]; do
+        echo "Tentativa $attempt de $max_attempts: Verificando se o mock server está pronto..."
+        
+        # Verifica se o servidor está respondendo
+        if curl -s http://localhost:$port/health > /dev/null; then
+            echo "Mock server pronto na porta $port"
+            return 0
+        fi
+        
+        echo "Mock server não está pronto. Aguardando 5 segundos..."
+        sleep 5
+        attempt=$((attempt + 1))
+    done
+    
+    echo "Erro: Mock server não ficou pronto após $max_attempts tentativas"
+    return 1
+}
+
+# Função para executar testes dentro do container
+run_tests_in_container() {
+    show_status "Executando testes dentro do container..."
+    
+    # Copia o arquivo Swagger para o container
+    docker cp $SWAGGER_FILE automated-api-testing:/app/core/swagger/swagger.yaml
+    
+    # Executa os comandos dentro do container
+    docker exec automated-api-testing sh -c "
+        npm run import-swagger -- --file=/app/core/swagger/swagger.yaml &&
+        npm run generate-collection &&
+        npm run test:unit &&
+        npm run test:bdd &&
+        npm run report
+    "
+    
+    if [ $? -ne 0 ]; then
+        echo "Erro ao executar testes dentro do container"
         exit 1
     fi
 }
 
-# Função para matar processos na porta
-kill_port() {
-    local port=$1
-    echo "Encerrando processos na porta $port..."
-    
-    # Usa sudo para garantir permissões
-    if ! sudo lsof -ti :$port | xargs sudo kill -9 2>/dev/null; then
-        echo "Nenhum processo encontrado na porta $port"
-    fi
-    
-    echo "Aguardando 2 segundos para os processos morrerem..."
-    sleep 2
-    
-    if sudo lsof -i :$port &> /dev/null; then
-        echo "Erro: Porta $port ainda está ocupada após tentar matar os processos"
-        return 1
-    fi
-    
-    echo "Porta $port liberada com sucesso"
-    return 0
-}
+# Função principal
+main() {
+    # Limpa o ambiente antes de começar
+    cleanup_environment
 
-# Função para construir a imagem Docker
-build_docker_image() {
-    show_status "Construindo imagem Docker usando docker-build.sh..."
-    
-    # Executa o script de build
+    # Verifica Docker e inicia os testes
+    check_docker
+
+    # Verifica Docker login
+    check_docker_login
+
+    # Constrói a imagem Docker usando docker-build.sh
+    show_status "Construindo imagem Docker..."
     ./docker-build.sh
     if [ $? -ne 0 ]; then
-        echo "Erro ao construir imagem Docker. Verifique o log acima para mais detalhes."
-        echo "Se o erro persistir, verifique:"
-        echo "1. Se todos os arquivos necessários estão presentes"
-        echo "2. Se há permissões adequadas nos arquivos"
-        echo "3. Se o Docker tem espaço suficiente no disco"
+        echo "Erro ao construir imagem Docker"
         exit 1
     fi
-    
-    echo "Imagem Docker construída com sucesso"
-}
 
-# Função para iniciar o mock server com Docker
-start_mock_with_docker() {
-    echo "Iniciando mock server com Docker..."
-    
-    # Para qualquer container existente
-    stop_mock_with_docker
-    
-    # Reconstrói a imagem
-    build_docker_image
-    
-    # Inicia o container com mais opções de segurança
-    docker run -d --name api-mock-server \
-        -p $MOCK_PORT:$MOCK_PORT \
-        -v $(pwd)/core/swagger:/app/core/swagger:ro \
-        --memory="512m" \
-        --memory-swap="1g" \
-        --restart=unless-stopped \
-        --security-opt=no-new-privileges \
-        --security-opt=apparmor=unconfined \
-        $DOCKER_IMAGE
-    
+    # Inicia o container
+    show_status "Iniciando container..."
+    docker run -d --name automated-api-testing -p $MOCK_PORT:$MOCK_PORT $DOCKER_IMAGE
     if [ $? -ne 0 ]; then
-        echo "Erro ao iniciar mock server com Docker. Verifique:"
-        echo "1. Se a porta $MOCK_PORT está disponível"
-        echo "2. Se há espaço suficiente no disco"
-        echo "3. Se o Docker tem recursos suficientes"
+        echo "Erro ao iniciar container"
         exit 1
     fi
-    
-    echo "Mock server iniciado com sucesso na porta $MOCK_PORT"
-    echo "Container ID: $(docker ps -qf "name=api-mock-server")"
+
+    # Inicia o mock server se necessário
+    if [ "$START_MOCK" = "true" ]; then
+        show_status "Iniciando servidor de mock..."
+        docker exec automated-api-testing sh -c "
+            prism mock /app/core/swagger/swagger.yaml \
+            -p $MOCK_PORT \
+            --host 0.0.0.0 \
+            --verboseLevel debug \
+            --dynamic \
+            --seed 123456 \
+            --errors false \
+            --cors true
+        " &
+        
+        # Aguarda o mock server ficar pronto
+        if ! check_mock_ready $MOCK_PORT; then
+            echo "Erro ao iniciar mock server"
+            exit 1
+        fi
+    fi
+
+    # Executa os testes dentro do container
+    run_tests_in_container
+
+    # Copia os relatórios para fora do container
+    show_status "Copiando relatórios para fora do container..."
+    docker cp automated-api-testing:/app/artifacts/reports ./artifacts/reports
+    if [ $? -ne 0 ]; then
+        echo "Erro ao copiar relatórios"
+    fi
+
+    # Finalização
+    echo "==================================================="
+    echo "Processo concluído com sucesso!"
+    echo "Ambiente: $ENVIRONMENT"
+    echo "Mock Server: $START_MOCK"
+    echo "Porta do Mock Server: $MOCK_PORT"
+    echo "Relatórios gerados em: ./artifacts/reports/"
+    echo "==================================================="
+
+    # Se estiver usando mock, aguarda o usuário terminar
+    if [ "$START_MOCK" = "true" ]; then
+        echo "Pressione Ctrl+C para encerrar o servidor de mock"
+        wait %1  # Aguarda o processo do mock server
+    fi
 }
 
-# Função para parar e remover o container do mock server
-stop_mock_with_docker() {
-    echo "Parando e removendo container do mock server..."
-    docker stop api-mock-server 2>/dev/null || true
-    docker rm api-mock-server 2>/dev/null || true
-}
-
-# Limpa o ambiente antes de começar
-cleanup_environment
-
-# Verifica Docker e inicia os testes
-check_docker
-
-# Verifica Docker login
-check_docker_login
-
-# 1. Iniciar servidor de mock (opcional)
-if [ "$START_MOCK" = "true" ]; then
-    show_status "Iniciando servidor de mock..."
-    
-    # Mata qualquer processo na porta 4010
-    if ! kill_port $MOCK_PORT; then
-        echo "Erro ao liberar porta $MOCK_PORT"
-        exit 1
-    fi
-    
-    # Inicia o mock server com Docker
-    start_mock_with_docker
-    
-    # Aguarda o mock server ficar pronto
-    if ! check_mock_ready $MOCK_PORT; then
-        echo "Erro ao iniciar mock server"
-        exit 1
-    fi
-    
-    # Atualiza as variáveis de ambiente
-    export BASE_URL="http://localhost:$MOCK_PORT"
-    export API_URL="http://localhost:$MOCK_PORT"
-    export API_BASE_URL="http://localhost:$MOCK_PORT"
-    export MOCK_SERVER_PORT=$MOCK_PORT
-fi
-
-# 2. Importar especificação Swagger
-show_status "Importando especificação Swagger..."
-npm run import-swagger -- --file=$SWAGGER_FILE
-if [ $? -ne 0 ]; then
-    echo "Erro ao importar especificação Swagger"
-    exit 1
-fi
-
-# 3. Gerar coleção Postman
-show_status "Gerando coleção Postman..."
-npm run generate-collection
-if [ $? -ne 0 ]; then
-    echo "Erro ao gerar coleção Postman"
-    exit 1
-fi
-
-# 4. Executar testes unitários
-show_status "Executando testes unitários..."
-export TEST_ENV=$ENVIRONMENT
-# Se estiver usando mock, garante que as variáveis de ambiente estão corretas
-if [ "$START_MOCK" = "true" ]; then
-    export BASE_URL="http://localhost:$MOCK_PORT"
-    export API_URL="http://localhost:$MOCK_PORT"
-    export API_BASE_URL="http://localhost:$MOCK_PORT"
-    export MOCK_SERVER_PORT=$MOCK_PORT
-fi
-
-npm run test:unit
-if [ $? -ne 0 ]; then
-    echo "Erro ao executar testes unitários"
-    exit 1
-fi
-
-# 5. Executar testes BDD
-show_status "Executando testes BDD..."
-npm run test:bdd
-if [ $? -ne 0 ]; then
-    echo "Erro ao executar testes BDD"
-    exit 1
-fi
-
-# 6. Gerar relatórios
-show_status "Gerando relatórios..."
-npm run report
-if [ $? -ne 0 ]; then
-    echo "Erro ao gerar relatórios"
-    exit 1
-fi
-
-# 7. Abrir relatório no navegador
-show_status "Abrindo relatório no navegador..."
-npm run report:open
-
-# Finalização
-echo "==================================================="
-echo "Processo concluído com sucesso!"
-echo "Ambiente: $ENVIRONMENT"
-echo "Mock Server: $START_MOCK"
-echo "Porta do Mock Server: $MOCK_PORT"
-echo "Relatórios gerados em: /artifacts/reports/"
-echo "==================================================="
-
-# Se estiver usando mock, aguarda o usuário terminar
-if [ "$START_MOCK" = "true" ]; then
-    echo "Pressione Ctrl+C para encerrar o servidor de mock"
-    wait %1  # Aguarda o processo do mock server
-fi
+# Executa a função principal
+main $@

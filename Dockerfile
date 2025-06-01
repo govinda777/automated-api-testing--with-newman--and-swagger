@@ -41,6 +41,9 @@ COPY docker-entrypoint.sh ./
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
+# Install Prism CLI
+RUN npm install -g @stoplight/prism-cli@5.14.2
+
 # Set permissions
 RUN chmod +x docker-entrypoint.sh
 
