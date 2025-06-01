@@ -1,7 +1,7 @@
 {
   "item": [
     {
-      "id": "beefc5c0-87e2-4c4f-9bf9-9147fe6db144",
+      "id": "669060e1-8536-4d76-ad58-dd090aa55fb9",
       "name": "List all users",
       "request": {
         "name": "List all users",
@@ -27,7 +27,7 @@
       },
       "response": [
         {
-          "id": "763ce194-752f-4848-934b-6ad3ea918e23",
+          "id": "052119a6-6025-4e25-8a1c-ee2d3c7bccf8",
           "name": "A list of users",
           "originalRequest": {
             "url": {
@@ -57,7 +57,7 @@
               "value": "application/json"
             }
           ],
-          "body": "[\n  {\n    \"id\": -93424760,\n    \"name\": \"sunt dolor\"\n  },\n  {\n    \"id\": -82645866,\n    \"name\": \"proident Ut culpa esse\"\n  }\n]",
+          "body": "[\n  {\n    \"id\": 30581919,\n    \"name\": \"sit aliquip sunt\"\n  },\n  {\n    \"id\": 41181997,\n    \"name\": \"veniam Excepteur\"\n  }\n]",
           "cookie": [],
           "_postman_previewlanguage": "json"
         }
@@ -74,8 +74,8 @@
               "pm.test(\"Schema is valid\", function() {",
               "    // Attempt to get the schema from the response definition in the collection",
               "    // openapi-to-postmanv2 might store the expected response schema here",
-              "    if (pm.item.responses && pm.item.responses.members && pm.item.responses.members[0] && pm.item.responses.members[0].body) {",
-              "        let expectedSchema = pm.item.responses.members[0].body;",
+              "    if (pm.item.responses && pm.item.responses && pm.item.responses[0] && pm.item.responses[0].body) {",
+              "        let expectedSchema = pm.item.responses[0].body;",
               "        if (expectedSchema) {",
               "            try {",
               "                // Assuming the schema is a JSON string, it needs to be parsed",
@@ -116,7 +116,7 @@
     }
   ],
   "info": {
-    "_postman_id": "281980ef-1364-41bd-adf9-6651d8f28dd7",
+    "_postman_id": "45081b6d-a301-4d6a-ac5a-11f401514008",
     "name": "Sample API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "description": {

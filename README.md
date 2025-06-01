@@ -9,16 +9,18 @@ Este projeto oferece um framework robusto para automatizar testes de API, conver
 - [Visão Geral](#visão-geral)
 - [Estrutura de Pastas](#estrutura-de-pastas)
 - [Pré-requisitos](#pré-requisitos)
+- [Instalação](#instalação)
 - [Configuração Inicial](#configuração-inicial)
-- [Fluxo de Trabalho Típico](#fluxo-de-trabalho-típico)
-- [Comandos Disponíveis (NPM Scripts)](#comandos-disponíveis-npm-scripts)
-- [Servidor de Mock (Mock Server)](#servidor-de-mock-mock-server)
+- [Fluxo de Trabalho](#fluxo-de-trabalho)
+- [Comandos Disponíveis](#comandos-disponíveis)
+- [Servidor de Mock](#servidor-de-mock)
 - [Estratégia de Testes](#estratégia-de-testes)
 - [Geração de Relatórios](#geração-de-relatórios)
 - [Configuração de Ambiente](#configuração-de-ambiente)
 - [Integração CI/CD](#integração-cicd)
-- [Documentação Detalhada](#documentação-detalhada)
+- [Documentação](#documentação)
 - [Benefícios](#benefícios)
+- [Passos para Configuração](#passos-para-configuração)
 
 ---
 
@@ -65,119 +67,235 @@ A estrutura do projeto é organizada da seguinte forma:
 
 ## Pré-requisitos
 
--   Node.js (versão especificada em `package.json`, e.g., >=16.0.0)
--   npm (geralmente vem com Node.js)
+Para utilizar este projeto, você precisará ter instalado:
+
+1. Node.js (versão >=16.0.0)
+   - Verifique a versão instalada: `node --version`
+   - Baixe a versão mais recente em: https://nodejs.org/
+
+2. npm (geralmente vem com Node.js)
+   - Verifique a versão instalada: `npm --version`
+
+3. Git (para clonar o repositório)
+   - Verifique a versão instalada: `git --version`
 
 ---
 
-## Configuração Inicial
+## Instalação
 
-1.  **Clone o repositório:**
-    ```bash
-    git clone https://github.com/govinda777/automated-api-testing--with-newman--and-swagger.git
-    cd automated-api-testing--with-newman--and-swagger
-    ```
-2.  **Instale as dependências:**
-    ```bash
-    npm install
-    ```
+Siga estes passos para configurar o projeto:
 
----
+1. **Clonar o repositório**
+   ```bash
+   git clone https://github.com/govinda777/automated-api-testing--with-newman--and-swagger.git
+   cd automated-api-testing--with-newman--and-swagger
+   ```
 
-## Fluxo de Trabalho Típico
+2. **Instalar dependências**
+   ```bash
+   npm install
+   ```
 
-1.  **Importar a Especificação da API:**
-    Use o comando `npm run import-swagger` para validar sua especificação OpenAPI/Swagger e copiá-la para `/core/swagger/swagger.yaml`.
-    ```bash
-    npm run import-swagger -- --file=./caminho/para/seu/swagger.yaml
-    ```
-2.  **Gerar a Coleção Postman:**
-    Converta a especificação importada em uma coleção Postman (`/artifacts/collections/generated-collection.json`) com testes básicos.
-    ```bash
-    npm run generate-collection
-    ```
-3.  **Executar Testes Unitários de API:**
-    Rode os testes da coleção gerada usando Newman.
-    ```bash
-    npm run test:unit
-    ```
-    *Nota:* A URL base e outras configurações para os testes de API serão carregadas a partir do arquivo de ambiente correspondente (e.g., `development.yaml` ou o especificado por `TEST_ENV` - veja [Configuração de Ambiente](#configuração-de-ambiente)).
-4.  **Executar Testes BDD:**
-    Execute os cenários de BDD definidos com Cucumber.js.
-    ```bash
-    npm run test:bdd
-    ```
-    *Nota:* Os testes BDD também utilizarão as configurações do ambiente ativo (e.g., `BASE_URL` definida em `process.env` pelo `hooks.js` - veja [Configuração de Ambiente](#configuração-de-ambiente)). Certifique-se que a API alvo esteja configurada e acessível.
-5.  **Gerar e Visualizar Relatórios:**
-    Gere relatórios consolidados dos testes de API.
-    ```bash
-    npm run report
-    ```
-    Para abrir o relatório HTML no seu navegador (se o comando `open` ou `xdg-open` estiver disponível):
-    ```bash
-    npm run report:open
-    ```
-    Ou abra manualmente o arquivo `/artifacts/reports/html-report.html`.
+3. **Verificar instalação**
+   ```bash
+   npm list
+   ```
+   Isso mostrará todas as dependências instaladas.
 
 ---
 
-## Comandos Disponíveis (NPM Scripts)
+## Fluxo de Trabalho
 
--   `npm run import-swagger -- --file=<filePath>`: Valida um arquivo Swagger/OpenAPI e o copia para `/core/swagger/swagger.yaml`.
-    -   Exemplo: `npm run import-swagger -- --file=./docs/swagger.yaml`
--   `npm run generate-collection`: Gera uma coleção Postman a partir do `/core/swagger/swagger.yaml` e a salva em `/artifacts/collections/generated-collection.json`, adicionando testes básicos para cada request (status code, validação de schema).
--   `npm run generate:data`: Executa o script `scripts/generators/example.js` para gerar massa de dados de teste dinâmica usando `@faker-js/faker`. Os dados são salvos, por padrão, em `tests/data/generated/dynamic-users.json`. Veja `tests/data/README.md` para mais detalhes sobre como usar e customizar a geração de dados.
--   `npm run test`: Executa testes Jest (se houver) e testes Cucumber.js (BDD). (Comportamento padrão original, pode ser ajustado).
--   `npm run test:unit`: Executa a coleção Postman gerada (`generated-collection.json`) com Newman, utilizando o ambiente configurado via `TEST_ENV` (padrão: `development`). Gera um relatório JSON e um log de console em `/artifacts/logs/`.
--   `npm run test:unit:folder <folderName>`: Executa apenas uma pasta específica dentro da coleção Postman gerada, utilizando o ambiente configurado. Substitua `<folderName>` pelo nome exato da pasta na coleção.
-    -   Exemplo: `TEST_ENV=staging npm run test:unit:folder "User Management"`
--   `npm run test:bdd`: Executa os testes BDD (Cucumber.js) localizados em `/tests/bdd/features/`, utilizando o ambiente configurado via `TEST_ENV`.
--   `npm run report`: Gera relatórios de teste consolidados (JUnit XML e HTMLEXTRA HTML) em `/artifacts/reports/` a partir da execução da coleção `generated-collection.json`, utilizando o ambiente configurado via `TEST_ENV`.
--   `npm run report:dashboard`: Gera um dashboard HTML agregado (`artifacts/reports/dashboard.html`) a partir dos resultados JSON dos testes Newman e Cucumber. **Importante:** Execute `npm run test:unit`, `npm run test:bdd`, e `npm run report` (todos com o `TEST_ENV` desejado, se aplicável) *antes* deste comando para garantir que os dados de origem e links estejam corretos e atualizados.
--   `npm run report:open`: Tenta abrir o relatório HTML (`html-report.html`) no navegador padrão.
--   `npm run doc`: Gera documentação JSDoc (se configurado).
--   `npm run mock-server`: Inicia o servidor de mock da API utilizando o Prism. Veja a seção [Servidor de Mock (Mock Server)](#servidor-de-mock-mock-server) para mais detalhes.
+### Executar Todo o Fluxo com um Script
 
----
+Para executar todo o fluxo de trabalho com um único comando, use o script `run-all-tests.sh`:
 
-## Servidor de Mock (Mock Server)
-
-Para facilitar o desenvolvimento e testes isolados, este projeto inclui um servidor de mock baseado no Prism. Ele utiliza o arquivo de especificação OpenAPI (`core/swagger/swagger.yaml`) para simular o comportamento da API, retornando respostas dinâmicas baseadas nos exemplos e schemas definidos.
-
-**Utilidade:**
--   Desenvolver o frontend ou outros serviços que dependem da API antes que ela esteja totalmente implementada.
--   Executar testes de contrato e de integração em um ambiente controlado sem depender de um backend real.
--   Isolar testes de componentes específicos que consomem a API.
-
-**Como iniciar o servidor de mock:**
-
-O servidor é iniciado utilizando o seguinte comando NPM:
 ```bash
-npm run mock-server
+./run-all-tests.sh [caminho/swagger.yaml] [ambiente] [iniciar-mock]
+
+./run-all-tests.sh ./api/swagger.yaml development true
 ```
-Por padrão, o servidor iniciará na porta **4010**.
 
-**Configurando a Porta:**
+Exemplos de uso:
+```bash
+# Executar com servidor de mock
+./run-all-tests.sh ./api/swagger.yaml development true
 
-Você pode especificar uma porta diferente para o servidor de mock de duas maneiras:
+# Executar sem servidor de mock
+./run-all-tests.sh ./api/swagger.yaml development false
+```
 
-1.  **Via variável de ambiente `PORT`:**
-    A variável de ambiente `PORT` tem precedência sobre o argumento de linha de comando.
-    ```bash
-    PORT=4011 npm run mock-server
-    ```
-    O servidor será iniciado na porta `4011`.
+O script executa automaticamente todos os passos:
+1. Inicia servidor de mock (se especificado)
+2. Importa a especificação Swagger
+3. Gera a coleção Postman
+4. Executa testes unitários
+5. Executa testes BDD
+6. Gera relatórios
+7. Abre o relatório no navegador
 
-2.  **Via argumento de linha de comando `--port`:**
-    Utilize `--` para passar argumentos diretamente para o script `scripts/mock-server.js`.
-    ```bash
-    npm run mock-server -- --port=4011
-    ```
-    O servidor será iniciado na porta `4011`.
+**Observações importantes**:
+- O servidor de mock é recomendado para testes locais
+- Sem o mock, os testes precisam de uma API real em execução
+- Pressione Ctrl+C para encerrar o servidor de mock quando terminar
+- Os relatórios são gerados em `/artifacts/reports/`
 
-Se nenhuma porta for especificada através da variável de ambiente ou argumento de linha de comando, o servidor usará a porta padrão `4010`. O servidor também exibirá no console qual arquivo Swagger está sendo usado e em qual porta ele está rodando.
+### Passos Individuais (Alternativa)
 
-É importante notar que, atualmente, o servidor de mock não detecta automaticamente alterações no arquivo `core/swagger/swagger.yaml` enquanto está em execução. Se você modificar a especificação da API, precisará reiniciar manualmente o servidor de mock (Ctrl+C e depois `npm run mock-server`) para que as alterações tenham efeito.
+Se preferir executar os passos manualmente, siga o fluxo abaixo:
+
+1. **Validar e importar arquivo Swagger/OpenAPI**
+   ```bash
+   npm run import-swagger -- --file=./caminho/para/seu/swagger.yaml
+   ```
+   - O arquivo será validado e copiado para `/core/swagger/swagger.yaml`
+   - Verifique se não há erros na saída do comando
+
+2. **Converter especificação em coleção Postman**
+   ```bash
+   npm run generate-collection
+   ```
+   - Gera coleção em `/artifacts/collections/generated-collection.json`
+   - Adiciona testes básicos para cada request
+   - Verifique a estrutura da coleção gerada
+
+3. **Executar testes com Newman**
+   ```bash
+   npm run test:unit
+   ```
+   - Executa todos os testes da coleção
+   - Gera logs em `/artifacts/logs/`
+   - Verifique o relatório de resultados
+
+4. **Executar testes de comportamento**
+   ```bash
+   npm run test:bdd
+   ```
+   - Executa cenários definidos em `/tests/bdd/features/`
+   - Usa configurações do ambiente ativo
+   - Verifique o relatório de resultados
+
+5. **Gerar relatórios**
+   ```bash
+   npm run report
+   ```
+   - Gera relatórios em `/artifacts/reports/`
+   - Formatos: HTML e JUnit XML
+   - Para visualizar no navegador:
+     ```bash
+     npm run report:open
+     ```
+   - Ou abra manualmente: `/artifacts/reports/html-report.html`
+
+---
+
+## Comandos Disponíveis
+
+### Comandos de Importação e Geração
+
+```bash
+# Importar especificação Swagger/OpenAPI
+npm run import-swagger -- --file=<caminho/para/swagger.yaml>
+
+# Gerar coleção Postman
+npm run generate-collection
+
+# Gerar dados de teste dinâmicos
+npm run generate:data
+```
+
+### Comandos de Testes
+
+```bash
+# Executar todos os testes
+npm run test
+
+# Executar testes unitários com Newman
+npm run test:unit
+
+# Executar testes unitários de uma pasta específica
+npm run test:unit:folder "Nome da Pasta"
+
+# Executar testes BDD (Cucumber.js)
+npm run test:bdd
+```
+
+### Comandos de Relatórios
+
+```bash
+# Gerar relatórios
+npm run report
+
+# Abrir relatório no navegador
+npm run report:open
+
+# Gerar dashboard agregado
+npm run report:dashboard
+```
+
+### Comandos de Documentação e Mock
+
+```bash
+# Gerar documentação
+npm run doc
+
+# Iniciar servidor de mock
+npm run mock-server
+
+# Iniciar servidor de mock em porta específica
+PORT=4011 npm run mock-server
+```
+
+---
+
+## Servidor de Mock
+
+### Iniciar Servidor de Mock
+
+```bash
+# Iniciar servidor na porta padrão (4010)
+npm run mock-server
+
+# Iniciar servidor em porta específica
+PORT=4011 npm run mock-server
+```
+
+### Configuração do Servidor
+
+1. **Especificar porta via variável de ambiente**
+   ```bash
+   PORT=4011 npm run mock-server
+   ```
+   - A variável `PORT` tem precedência sobre argumentos de linha de comando
+
+2. **Especificar porta via argumento de linha de comando**
+   ```bash
+   npm run mock-server -- --port=4011
+   ```
+
+### Observações Importantes
+
+- O servidor usa o arquivo `core/swagger/swagger.yaml` como base
+- Não detecta alterações automáticas no arquivo Swagger
+- Para aplicar mudanças, reinicie o servidor (Ctrl+C e execute novamente)
+- O servidor exibe no console:
+  - Arquivo Swagger em uso
+  - Porta em que está rodando
+
+### Casos de Uso
+
+- Desenvolvimento de frontend antes da API estar pronta
+- Testes de contrato e integração em ambiente controlado
+- Isolamento de testes de componentes específicos
+- Simulação de comportamento da API com respostas dinâmicas
+
+### Verificação do Servidor
+
+Para verificar se o servidor está rodando corretamente:
+
+1. Acesse a URL base do servidor
+2. Verifique se as respostas seguem o schema definido no Swagger
+3. Teste diferentes endpoints para garantir que estão funcionando como esperado
 
 ---
 
