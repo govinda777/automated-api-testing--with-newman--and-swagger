@@ -17,6 +17,7 @@ Este projeto oferece um framework robusto para automatizar testes de API, conver
 - [Geração de Relatórios](#geração-de-relatórios)
 - [Configuração de Ambiente](#configuração-de-ambiente)
 - [Integração CI/CD](#integração-cicd)
+- [Documentação Detalhada](#documentação-detalhada)
 - [Benefícios](#benefícios)
 
 ---
@@ -29,6 +30,7 @@ O objetivo principal é simplificar e acelerar o processo de testes de API atrav
 3.  **Execução de Testes Unitários de API:** Validação de cada endpoint individualmente usando Newman.
 4.  **Execução de Testes BDD:** Validação de fluxos de usuário e cenários de negócio complexos com Cucumber.js.
 5.  **Relatórios Detalhados:** Geração de múltiplos formatos de relatório (HTML, JUnit XML) para análise dos resultados.
+Para uma representação visual da arquitetura geral do sistema e como os componentes interagem, veja o [Diagrama de Arquitetura Macro](./DIAGRAM.md#macro-level-system-architecture). Informações mais detalhadas sobre a arquitetura e os componentes da implementação atual estão disponíveis em [ARQ.md](./ARQ.md#detailed-component-descriptions-current-implementation) e na [documentação principal](./doc/index.html).
 
 ---
 
@@ -184,6 +186,7 @@ Se nenhuma porta for especificada através da variável de ambiente ou argumento
 O projeto emprega uma estratégia de testes em múltiplas camadas:
 
 -   **Testes Unitários de API (Newman):** A coleção Postman gerada automaticamente (`generated-collection.json`) a partir da especificação OpenAPI é ideal para validar cada endpoint individualmente. Estes testes, executados com `npm run test:unit` (ou `npm run test:unit:folder <folderName>` para pastas específicas), verificam aspectos como status codes corretos (`2xx`) e a conformidade da estrutura da resposta com o schema JSON esperado (validação de contrato). Esta abordagem é excelente para garantir a saúde básica e a conformidade de cada endpoint da API.
+        Para um diagrama detalhado do fluxo de execução destes testes Newman, consulte o [Fluxo de Execução de Testes (Newman)](./DIAGRAM.md#test-execution-flow-newman).
 
 -   **Testes de Comportamento (BDD - Cucumber.js):** Para validar fluxos de usuário e cenários de negócio mais complexos, que podem envolver múltiplas interações com a API, utilizamos Cucumber.js. Os cenários são definidos em linguagem Gherkin (`.feature`) e os *step definitions* (passos) são implementados em JavaScript.
     -   **Abordagem de Interação com a API:** Dentro dos *step definitions* do Cucumber, a interação com a API é realizada através de chamadas HTTP diretas, utilizando bibliotecas como `axios` (já inclusa no projeto). Esta abordagem oferece maior controle sobre as requisições e respostas, permite construir e manipular dados de forma programática entre os passos, e mantém os cenários BDD focados no comportamento do usuário, não na estrutura de uma coleção Postman. Tentar reutilizar requisições de uma coleção Postman diretamente dentro dos steps do Cucumber pode levar a um acoplamento desnecessário e dificultar a clareza dos testes de comportamento.
@@ -208,6 +211,7 @@ O projeto emprega uma estratégia de testes em múltiplas camadas:
 -   **HTML (HTMLEXTRA)**: Um relatório HTML interativo e detalhado é gerado em `/artifacts/reports/html-report.html`. Este relatório oferece uma visão amigável dos resultados dos testes, incluindo detalhes de requisições, respostas e asserções.
     -   Para visualizar o relatório, abra o arquivo `artifacts/reports/html-report.html` em seu navegador.
     -   Um script auxiliar opcional `npm run report:open` tenta abrir o relatório automaticamente.
+        O processo de como estes e outros relatórios são gerados é detalhado no [Fluxo de Geração de Relatórios](./DIAGRAM.md#report-generation-flow).
 -   **JUnit XML**: Um relatório em formato XML compatível com JUnit é gerado em `/artifacts/reports/junit-report.xml`. Este formato é comumente usado para integração com sistemas de Integração Contínua (CI/CD) como Jenkins, GitLab CI, etc.
 -   **CLI**: Saída de console (Command Line Interface) é exibida durante a execução dos testes Newman, fornecendo feedback imediato.
 -   **Logs de Testes Unitários**: Logs detalhados da execução de `npm run test:unit` são salvos em `/artifacts/logs/unit-tests.log`, e um relatório JSON cru também é gerado em `/artifacts/logs/unit-tests-report.json`.
@@ -308,6 +312,19 @@ Este projeto é projetado para ser facilmente integrado em pipelines CI/CD (e.g.
 
 Melhorias futuras podem incluir gerenciamento de ambiente mais sofisticado dentro do pipeline CI/CD e implantação automatizada baseada nos resultados dos testes.
 O arquivo existente `.github/workflows/static.yml` fornece um exemplo de um workflow do GitHub Actions, que pode ser expandido para automação completa de testes.
+Uma visualização detalhada deste fluxo de trabalho do GitHub Actions pode ser encontrada no [Diagrama do Pipeline de CI/CD](./DIAGRAM.md#cicd-pipeline-flow).
+
+---
+
+## Documentação Detalhada
+
+Além deste README, o projeto conta com documentação mais aprofundada:
+
+-   **[Documentação Principal (HTML)](./doc/index.html):** Apresenta uma visão geral navegável do projeto, seus fluxos, benefícios e outros aspectos, ideal para ser servida via GitHub Pages.
+-   **[Diagramas da Arquitetura e Fluxos (DIAGRAM.md)](./DIAGRAM.md):** Contém diagramas Mermaid que ilustram a arquitetura macro do sistema, o pipeline de CI/CD, o fluxo de execução de testes Newman e o fluxo de geração de relatórios.
+-   **[Detalhes da Arquitetura e Componentes (ARQ.md)](./ARQ.md):** Oferece uma discussão sobre a arquitetura proposta e descrições detalhadas dos componentes chave da implementação atual do sistema.
+
+Recomenda-se consultar estes documentos para um entendimento completo da estrutura e funcionamento do projeto.
 
 ---
 
