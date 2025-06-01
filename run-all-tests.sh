@@ -11,6 +11,10 @@ START_MOCK=${3:-false}  # Iniciar servidor de mock por padrão
 MOCK_PORT=4010  # Porta padrão do mock server
 DOCKER_IMAGE="automated-api-testing:latest"
 
+# Configura Buildx para Docker
+export DOCKER_BUILDKIT=1
+export DOCKER_CLI_EXPERIMENTAL=enabled
+
 # Função para mostrar status
 show_status() {
     echo "==================================================="
@@ -52,22 +56,87 @@ check_docker() {
     fi
 }
 
-# Limpa o ambiente antes de começar
-cleanup_environment
+# Função para verificar se o Docker está logado
+check_docker_login() {
+    echo "Verificando Docker login..."
+    # Tenta listar imagens para verificar se está logado
+    if ! docker images &> /dev/null; then
+        echo "Docker não está logado."
+        echo "1. Construir imagem localmente (recomendado)"
+        echo "2. Fazer login no Docker"
+        echo "3. Sair"
+        read -p "Escolha uma opção (1-3): " choice
+        
+        case $choice in
+            1)
+                echo "Construindo imagem localmente..."
+                build_docker_image
+                return 0
+                ;;
+            2)
+                echo "Execute: docker login"
+                exit 1
+                ;;
+            3)
+                exit 1
+                ;;
+            *)
+                echo "Opção inválida. Saindo..."
+                exit 1
+                ;;
+        esac
+    fi
+}
 
-# Verifica Docker e inicia os testes
-check_docker
+# Função para verificar se o mock server está pronto
+check_mock_server() {
+    echo "\nValidando se o mock server está pronto..."
+    
+    # Executa o script de validação
+    if ! node scripts/validate-mock-server.js; then
+        echo "Erro: Mock server não ficou pronto após várias tentativas"
+        exit 1
+    fi
+}
 
-# Resto do script...
+# Função para matar processos na porta
+kill_port() {
+    local port=$1
+    echo "Encerrando processos na porta $port..."
+    
+    # Usa sudo para garantir permissões
+    if ! sudo lsof -ti :$port | xargs sudo kill -9 2>/dev/null; then
+        echo "Nenhum processo encontrado na porta $port"
+    fi
+    
+    echo "Aguardando 2 segundos para os processos morrerem..."
+    sleep 2
+    
+    if sudo lsof -i :$port &> /dev/null; then
+        echo "Erro: Porta $port ainda está ocupada após tentar matar os processos"
+        return 1
+    fi
+    
+    echo "Porta $port liberada com sucesso"
+    return 0
+}
 
 # Função para construir a imagem Docker
 build_docker_image() {
-    echo "Construindo imagem Docker..."
-    docker build -t $DOCKER_IMAGE .
+    show_status "Construindo imagem Docker usando docker-build.sh..."
+    
+    # Executa o script de build
+    ./docker-build.sh
     if [ $? -ne 0 ]; then
-        echo "Erro ao construir imagem Docker"
+        echo "Erro ao construir imagem Docker. Verifique o log acima para mais detalhes."
+        echo "Se o erro persistir, verifique:"
+        echo "1. Se todos os arquivos necessários estão presentes"
+        echo "2. Se há permissões adequadas nos arquivos"
+        echo "3. Se o Docker tem espaço suficiente no disco"
         exit 1
     fi
+    
+    echo "Imagem Docker construída com sucesso"
 }
 
 # Função para iniciar o mock server com Docker
@@ -80,18 +149,27 @@ start_mock_with_docker() {
     # Reconstrói a imagem
     build_docker_image
     
-    # Inicia o container
+    # Inicia o container com mais opções de segurança
     docker run -d --name api-mock-server \
         -p $MOCK_PORT:$MOCK_PORT \
-        -v $(pwd)/core/swagger:/app/core/swagger \
+        -v $(pwd)/core/swagger:/app/core/swagger:ro \
         --memory="512m" \
         --memory-swap="1g" \
+        --restart=unless-stopped \
+        --security-opt=no-new-privileges \
+        --security-opt=apparmor=unconfined \
         $DOCKER_IMAGE
     
     if [ $? -ne 0 ]; then
-        echo "Erro ao iniciar mock server com Docker"
+        echo "Erro ao iniciar mock server com Docker. Verifique:"
+        echo "1. Se a porta $MOCK_PORT está disponível"
+        echo "2. Se há espaço suficiente no disco"
+        echo "3. Se o Docker tem recursos suficientes"
         exit 1
     fi
+    
+    echo "Mock server iniciado com sucesso na porta $MOCK_PORT"
+    echo "Container ID: $(docker ps -qf "name=api-mock-server")"
 }
 
 # Função para parar e remover o container do mock server
@@ -101,107 +179,18 @@ stop_mock_with_docker() {
     docker rm api-mock-server 2>/dev/null || true
 }
 
-# Função para verificar se o mock server está pronto
-check_mock_ready() {
-    local port=$1
-    local attempts=30
-    local delay=1
-    
-    for ((i=1; i<=attempts; i++)); do
-        echo "Tentativa $i/$attempts - Verificando se o mock server está respondendo..."
-        
-        # Verifica se o processo está rodando
-        if ! ps aux | grep -v grep | grep -q "prism mock"; then
-            echo "Erro: Processo do mock server não está mais rodando"
-            return 1
-        fi
-        
-        # Verifica se o servidor está respondendo
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$port/users)
-        if [ "$RESPONSE" = "200" ]; then
-            echo "Mock server pronto e respondendo na porta $port"
-            return 0
-        fi
-        
-        # Verifica se o servidor está respondendo com qualquer código HTTP
-        if [ "$RESPONSE" -ge "100" ] && [ "$RESPONSE" -le "599" ]; then
-            echo "Mock server respondendo com código HTTP $RESPONSE"
-            return 0
-        fi
-        
-        sleep $delay
-    done
-    
-    echo "Erro: Mock server não ficou pronto após $attempts tentativas"
-    return 1
-}
+# Limpa o ambiente antes de começar
+cleanup_environment
 
-# Função para matar processos na porta
-kill_port() {
-    local port=$1
-    echo "Encerrando processos na porta $port..."
-    # Primeiro mata os processos
-    lsof -ti :$port | xargs kill -9 2>/dev/null || true
-    
-    # Aguarda um pouco para garantir que os processos morreram
-    echo "Aguardando 2 segundos para os processos morrerem..."
-    sleep 2
-    
-    # Verifica se a porta ainda está ocupada
-    if lsof -i :$port &> /dev/null; then
-        echo "Erro: Porta $port ainda está ocupada após tentar matar os processos"
-        return 1
-    fi
-    
-    echo "Porta $port liberada com sucesso"
-    return 0
-}
+# Verifica Docker e inicia os testes
+check_docker
 
-# Função para testar endpoint
-make_test_request() {
-    local endpoint=$1
-    local http_code
-    
-    # Usa -s para modo silencioso e -w para extrair apenas o código HTTP
-    # Usa -X GET para especificar o método HTTP
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$MOCK_PORT$endpoint")
-    
-    # Verifica se o código é 200 antes de imprimir
-    if [ "$http_code" -ne 200 ]; then
-        echo "Erro: Endpoint .. $endpoint não está respondendo com 200 (obtido: $http_code)"
-        return 1
-    fi
-    
-    # Imprime o código HTTP apenas se for sucesso
-    echo "Código de resposta do endpoint $endpoint: $http_code"
-    echo "Endpoint $endpoint funcionando corretamente com código HTTP $http_code"
-    return 0
-}
-
-# Função para verificar se o mock server está respondendo corretamente
-verify_mock_response() {
-    local endpoint=$1
-    local expected_code=$2
-    local attempts=5
-    
-    for i in {1..$attempts}; do
-        echo "Verificando resposta do endpoint $endpoint (tentativa $i/$attempts)..."
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$MOCK_PORT$endpoint")
-        if [ "$RESPONSE" = "$expected_code" ]; then
-            echo "Resposta válida recebida (código $RESPONSE)"
-            return 0
-        fi
-        echo "Resposta não válida (código $RESPONSE), aguardando 2 segundos..."
-        sleep 2
-    done
-    
-    echo "Erro: Não foi possível obter resposta válida após $attempts tentativas"
-    return 1
-}
+# Verifica Docker login
+check_docker_login
 
 # 1. Iniciar servidor de mock (opcional)
 if [ "$START_MOCK" = "true" ]; then
-    show_status "Iniciando servidor de mock com menos memória..."
+    show_status "Iniciando servidor de mock..."
     
     # Mata qualquer processo na porta 4010
     if ! kill_port $MOCK_PORT; then
@@ -209,69 +198,14 @@ if [ "$START_MOCK" = "true" ]; then
         exit 1
     fi
     
-    # Inicia o mock server com menos memória
-    echo "Iniciando servidor mock Prism com menos memória..."
-    
-    # Primeiro limpa o cache do npm
-    npm cache clean --force
-    
-    # Instala Prism localmente
-    npm install @stoplight/prism-cli@5.14.2 --save-dev
-    
-    # Define o caminho absoluto do Swagger
-    SWAGGER_PATH=$(pwd)/core/swagger/swagger.yaml
-    
-    # Verifica se o arquivo existe
-    if [ ! -f "$SWAGGER_PATH" ]; then
-        echo "Erro: Arquivo Swagger não encontrado em $SWAGGER_PATH"
-        exit 1
-    fi
-    
-    # Inicia o mock server com limites de memória
-    echo "Iniciando servidor mock Prism com o comando:"
-    echo "node --max-old-space-size=512 ./node_modules/.bin/prism mock \"$SWAGGER_PATH\" -p $MOCK_PORT --host 0.0.0.0 --verboseLevel debug"
-    
-    # Inicia o mock server em segundo plano
-    node --max-old-space-size=512 ./node_modules/.bin/prism mock "$SWAGGER_PATH" -p $MOCK_PORT --host 0.0.0.0 --verboseLevel debug &
+    # Inicia o mock server com Docker
+    start_mock_with_docker
     
     # Aguarda o mock server ficar pronto
     if ! check_mock_ready $MOCK_PORT; then
         echo "Erro ao iniciar mock server"
         exit 1
     fi
-    
-    # Aguarda um pouco mais para garantir que o servidor esteja completamente pronto
-    echo "Aguardando 5 segundos adicionais para o servidor estar completamente pronto..."
-    sleep 5
-fi
-    
-    # Testa o endpoint /users
-    echo "Testando endpoint /users..."
-    RESPONSE_CODE=$(make_test_request "/users")
-    echo "Código de resposta do endpoint /users: $RESPONSE_CODE"
-    if [ "$RESPONSE_CODE" != "200" ]; then
-        echo "Erro: Endpoint . /users não está respondendo com 200 (obtido: $RESPONSE_CODE)"
-        exit 1
-    fi
-    
-    # Verifica se o conteúdo da resposta está correto
-    RESPONSE=$(curl -s "http://localhost:$MOCK_PORT/users")
-    echo "Conteúdo da resposta:"
-    echo "$RESPONSE"
-    if [[ $RESPONSE != *"id"* ]] || [[ $RESPONSE != *"name"* ]]; then
-        echo "Erro: Resposta não contém os campos esperados (id e name)"
-        exit 1
-    fi
-    
-    # Verifica se o mock server está respondendo corretamente
-    if ! verify_mock_response "/users" "200"; then
-        echo "Erro: Mock server não está respondendo corretamente"
-        exit 1
-    fi
-    
-    # Aguarda mais alguns segundos para garantir que o servidor esteja completamente pronto
-    echo "Aguardando 15 segundos adicionais para o servidor estar completamente pronto..."
-    sleep 15
     
     # Atualiza as variáveis de ambiente
     export BASE_URL="http://localhost:$MOCK_PORT"
@@ -296,11 +230,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Aguarda mais alguns segundos para o mock server processar as alterações
-show_status "Aguardando mock server processar alterações..."
-echo "Aguardando 15 segundos adicionais..."
-sleep 15
-
 # 4. Executar testes unitários
 show_status "Executando testes unitários..."
 export TEST_ENV=$ENVIRONMENT
@@ -311,10 +240,6 @@ if [ "$START_MOCK" = "true" ]; then
     export API_BASE_URL="http://localhost:$MOCK_PORT"
     export MOCK_SERVER_PORT=$MOCK_PORT
 fi
-
-# Verifica o conteúdo do arquivo de ambiente
-show_status "Verificando arquivo de ambiente..."
-cat artifacts/environments/newman_env.json
 
 npm run test:unit
 if [ $? -ne 0 ]; then
