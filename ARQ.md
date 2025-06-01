@@ -88,7 +88,7 @@ class PollingManager {
     };
     this.activePolls = new Map();
   }
-  
+
   async startPolling(endpoint, condition, strategy = 'exponential') {
     // Implementação com backoff adaptativo
   }
@@ -181,3 +181,174 @@ Citations:
 [25] https://www.lucidchart.com/blog/pt/teste-de-api-guia-completo
 [26] https://voidr.co/blog/design-pattern-testes-e2e/
 
+
+## Detailed Component Descriptions (Current Implementation)
+
+### Core Swagger Processor (`core/swagger/index.js`)
+
+**Purpose:** This script is responsible for importing and validating the API's Swagger/OpenAPI specification file.
+
+**Triggered by:** `npm run import-swagger -- --file=<filePath>`
+
+**Key Responsibilities & Flow:**
+1.  **File Input:** Accepts a file path as a command-line argument (`--file`). This is typically the path to the project's `swagger.yaml` or `swagger.json` file.
+2.  **Validation:** Uses the `swagger-parser` library to validate the provided OpenAPI specification. This checks for structural correctness and adherence to the OpenAPI standard.
+    *   If validation fails, an error is thrown, and the process stops.
+    *   If validation succeeds, a confirmation message is displayed.
+3.  **Copying (Implicit):** While the script's primary documented function is validation, the `import-swagger` command in `package.json` might be configured to also copy the validated file to a standard location within the project, such as `core/swagger/swagger.yaml`. This standardized internal path is then used by other scripts (like the collection builder).
+4.  **Output:** Console messages indicating success or failure of validation. The main artifact is the validated (and potentially copied) Swagger file itself.
+
+**Interactions:**
+-   **Input:** Swagger/OpenAPI file from the path specified in the command.
+-   **Output:** Validated Swagger file at `core/swagger/swagger.yaml` (by convention/`package.json` script logic) and console feedback.
+-   **Libraries:** `swagger-parser`, `yargs` (for command-line argument parsing).
+
+---
+
+### Collection Builder (`core/builders/index.js`)
+
+**Purpose:** This script converts the project's validated Swagger/OpenAPI specification into a Postman collection (`generated-collection.json`), automatically adding basic tests to each API request.
+
+**Triggered by:** `npm run generate-collection`
+
+**Key Responsibilities & Flow:**
+1.  **Input Specification:** Reads the standardized Swagger/OpenAPI specification from `core/swagger/swagger.yaml`.
+2.  **Conversion:** Utilizes the `openapi-to-postmanv2` library to perform the conversion from the OpenAPI format to the Postman Collection v2.1 format.
+3.  **Basic Test Generation (Implicit in `openapi-to-postmanv2` or custom logic):**
+    *   For each API endpoint and HTTP method, basic tests are typically added to the generated Postman request. These usually include:
+        *   **Status Code Checks:** Verifying that the API response returns an expected success status code (e.g., 200 OK, 201 Created).
+        *   **Schema Validation (Optional but Recommended):** If response schemas are defined in the OpenAPI spec, tests can be added to validate that the actual API response body conforms to this schema. The `openapi-to-postmanv2` library has options to control test generation.
+4.  **Output:** Saves the generated Postman collection to `artifacts/collections/generated-collection.json`.
+
+**Interactions:**
+-   **Input:** `core/swagger/swagger.yaml`.
+-   **Output:** `artifacts/collections/generated-collection.json`.
+-   **Libraries:** `openapi-to-postmanv2`, `fs` (for file system operations).
+
+**Notes:** The effectiveness of schema validation tests depends on how well-defined the response schemas are in the OpenAPI specification.
+
+---
+
+### Newman Environment Preparation (`scripts/setup/prepare-newman-env.js`)
+
+**Purpose:** This script dynamically creates the `newman_env.json` file, which provides environment-specific variables (like `baseUrl`, API keys, etc.) to Newman when it executes tests.
+
+**Triggered by:** Automatically run as a prerequisite by `npm pretest:unit` and `npm prereport` lifecycle scripts before `test:unit` or `report` commands are executed.
+
+**Key Responsibilities & Flow:**
+1.  **Determine Active Environment:**
+    *   Checks the `TEST_ENV` environment variable.
+    *   If `TEST_ENV` is not set, it defaults to `development`.
+2.  **Load YAML Configuration:** Reads the appropriate YAML configuration file from the `config/environments/` directory (e.g., `config/environments/development.yaml` or `config/environments/staging.yaml`).
+3.  **Transform to Newman Format:** Converts the key-value pairs from the loaded YAML file into the JSON structure required by Newman for environment files. This typically involves creating an array of objects, where each object has `key`, `value`, and `enabled": true` properties.
+    ```json
+    // Example output structure for newman_env.json
+    {
+      "id": "...", // A generated UUID
+      "name": "Dynamic Environment for TEST_ENV",
+      "values": [
+        { "key": "baseUrl", "value": "http://localhost:3000/api", "enabled": true },
+        { "key": "apiKey", "value": "some_api_key", "enabled": true }
+      ],
+      "_postman_variable_scope": "environment",
+      // ... other Postman metadata
+    }
+    ```
+4.  **Output:** Saves the generated JSON content to `artifacts/environments/newman_env.json`.
+
+**Interactions:**
+-   **Input:** `TEST_ENV` environment variable, YAML files in `config/environments/`.
+-   **Output:** `artifacts/environments/newman_env.json`.
+-   **Libraries:** `js-yaml` (to parse YAML), `fs` (for file system), `uuid` (to generate IDs for the Postman environment structure).
+
+This script ensures that Newman tests are always executed with the correct set of variables for the targeted environment, making test runs flexible and configurable.
+
+---
+
+### Dashboard Generator (`scripts/generate-dashboard.js`)
+
+**Purpose:** This script creates a consolidated HTML dashboard (`artifacts/reports/dashboard.html`) that summarizes results from different test runs (Newman and Cucumber BDD).
+
+**Triggered by:** `npm run report:dashboard` (often part of `npm run report:all`)
+
+**Key Responsibilities & Flow:**
+1.  **Input Data Aggregation:**
+    *   **Newman JSON Report:** Reads the JSON report generated by Newman (e.g., `artifacts/logs/unit-tests-report.json`). This file contains detailed results of the API contract tests.
+    *   **Cucumber BDD JSON Report:** Reads the JSON report generated by Cucumber.js after BDD tests are run (e.g., `artifacts/logs/bdd-report.json`). This file contains results of the behavior-driven tests. The script should gracefully handle cases where this file might be missing (e.g., if BDD tests were not run).
+    *   **(Optional) Link to HTMLEXTRA Report:** It may be designed to know the conventional path to the detailed Newman HTMLEXTRA report (`artifacts/reports/html-report.html`) to include a direct link in the dashboard.
+2.  **Data Processing:**
+    *   Parses the JSON reports to extract key metrics: total tests, passed tests, failed tests, skipped tests (if applicable), and total duration for both Newman and BDD test suites.
+    *   Calculates overall summary statistics.
+3.  **HTML Generation:**
+    *   Constructs an HTML page (`dashboard.html`) presenting these aggregated metrics in a user-friendly format.
+    *   Typically includes summary tables, pass/fail percentages, and links to more detailed individual reports.
+4.  **Output:** Saves the generated HTML dashboard to `artifacts/reports/dashboard.html`.
+
+**Interactions:**
+-   **Input:**
+    -   `artifacts/logs/unit-tests-report.json` (from Newman)
+    -   `artifacts/logs/bdd-report.json` (from Cucumber, optional)
+-   **Output:** `artifacts/reports/dashboard.html`
+-   **Libraries:** `fs` (for file system operations), potentially a templating engine like Handlebars or EJS if the HTML structure is complex, otherwise, direct string manipulation for HTML.
+
+**Simple Data Flow for Dashboard Generation:**
+```mermaid
+graph TD
+    subgraph Inputs
+        NewmanJSON[Newman JSON Report
+(unit-tests-report.json)]
+        CucumberJSON[Cucumber BDD JSON Report
+(bdd-report.json, optional)]
+    end
+
+    subgraph Processing
+        DashboardScript[scripts/generate-dashboard.js]
+    end
+
+    subgraph Output
+        DashboardHTML[artifacts/reports/dashboard.html]
+    end
+
+    NewmanJSON --> DashboardScript;
+    CucumberJSON --> DashboardScript;
+    DashboardScript --> DashboardHTML;
+
+    classDef inputs_node fill:#lightgrey,stroke:#333;
+    classDef processing_node fill:#lightyellow,stroke:#333;
+    classDef output_node fill:#lightgreen,stroke:#333;
+
+    class NewmanJSON,CucumberJSON inputs_node;
+    class DashboardScript processing_node;
+    class DashboardHTML output_node;
+```
+
+---
+
+### Test Data Management
+
+**Purpose:** To provide a structured approach for managing and utilizing data required for API tests, supporting both static and dynamically generated datasets.
+
+**Key Locations & Scripts:**
+-   **Static Data:** `tests/data/` directory.
+    -   Contains JSON files with predefined data sets (e.g., `sampleUser.data.json`, `expected_responses.json`).
+    -   Useful for tests requiring specific, consistent input values or for validating against known expected outputs.
+    -   Referenced in `tests/data/README.md` for conventions.
+-   **Dynamic Data Generation:** `scripts/generators/example.js`
+    -   Triggered by: `npm run generate:data`.
+    -   Uses the `@faker-js/faker` library to produce varied and realistic test data (e.g., user profiles, product details).
+    -   By default, saves generated data to `tests/data/generated/dynamic-users.json` (this path can be configured).
+    -   Allows for creating large sets of unique data, reducing test data flakiness and improving coverage of edge cases.
+-   **Data Loader Utility (Conceptual):** `tests/utils/data-loader.js` (mentioned in file tree, implementation details would define its exact role).
+    -   Could be a utility module to simplify loading data from either static JSON files or generated files within test scripts (both Newman test scripts and Cucumber step definitions).
+    -   Might provide functions like `loadStaticData('sampleUser')` or `loadGeneratedData('dynamic-users')`.
+
+**Usage in Tests:**
+-   **Newman Tests (Collection):** Test scripts within the Postman collection (`artifacts/collections/generated-collection.json`) might be written to:
+    -   Use `pm.iterationData.get("variableName")` if data is supplied via a Newman data file during execution (less common with the current script setup).
+    -   More likely, if tests need specific data from `tests/data/`, the collection generation process (`core/builders/index.js`) would need to be enhanced to embed this data or make it accessible to the test scripts within the Postman sandbox. Alternatively, tests could make `pm.sendRequest` calls to a local mock endpoint that serves this test data.
+-   **Cucumber BDD Tests:** Step definitions in `tests/bdd/step-definitions/` would directly use Node.js `fs.readFile` or `require` (for JSON) to load data from `tests/data/` or `tests/data/generated/` as needed. The conceptual `data-loader.js` would be helpful here.
+
+**Strategy:**
+-   Use **static data** for predictable scenarios, core functionality tests, and when specific values are crucial for validation.
+-   Use **dynamic data** for broader testing, stress testing (if applicable), testing variations in input, and reducing reliance on hardcoded values that might become outdated.
+-   The `tests/data/README.md` should be the source of truth for data conventions and how to use generated data.

@@ -58,6 +58,10 @@
                     <span class="sidebar__icon">🎯</span>
                     Conclusão
                 </a></li>
+                <li><a href="#componentes-detalhados" class="sidebar__link">
+                    <span class="sidebar__icon">🔩</span>
+                    Detalhes dos Componentes
+                </a></li>
                 <li><a href="../artifacts/reports/dashboard.html" class="sidebar__link">
                     <span class="sidebar__icon">📊</span>
                     Relatório de Testes
@@ -89,6 +93,7 @@
                         <div class="card">
                             <div class="card__body">
                                 <p>A arquitetura é composta por cinco componentes essenciais que trabalham em sinergia para fornecer uma solução completa de testes automatizados. O Newman é uma ferramenta de linha de comando desenvolvida pela Postman que permite executar e automatizar collections Postman, sendo ideal para testes de API. A integração com especificações Swagger/OpenAPI permite a conversão automática de documentação de API em collections executáveis.</p>
+                                <p>Uma representação visual da arquitetura macro do sistema, mostrando os principais componentes e suas interações, está disponível em <a href="../DIAGRAM.md#macro-level-system-architecture" target="_blank">DIAGRAM.md</a>. Para descrições detalhadas dos componentes chave da implementação atual, consulte <a href="../ARQ.md#detailed-component-descriptions-current-implementation" target="_blank">ARQ.md</a>.</p>
                             </div>
                         </div>
                     </div>
@@ -99,6 +104,14 @@
             <section id="fluxo-trabalho" class="section">
                 <div class="container">
                     <h2 class="section__title">Fluxo de Trabalho Detalhado</h2>
+                    <div class="card"><div class="card__body">
+                    <p>Diagramas detalhados ilustrando os principais fluxos de trabalho, como o pipeline de CI/CD, a execução de testes com Newman e a geração de relatórios, podem ser encontrados em <a href="../DIAGRAM.md" target="_blank">DIAGRAM.md</a>. Especificamente:</p>
+                    <ul>
+                        <li><a href="../DIAGRAM.md#cicd-pipeline-flow" target="_blank">Fluxo do Pipeline de CI/CD</a></li>
+                        <li><a href="../DIAGRAM.md#test-execution-flow-newman" target="_blank">Fluxo de Execução de Testes (Newman)</a></li>
+                        <li><a href="../DIAGRAM.md#report-generation-flow" target="_blank">Fluxo de Geração de Relatórios</a></li>
+                    </ul>
+                    </div></div>
                     
                     <div class="phases-grid">
                         <div class="phase-card">
@@ -246,6 +259,20 @@
                             <div class="card__body">
                                 <p>A implementação de monitoramento contínuo e sistemas de alerta é essencial para manter a qualidade da API em produção. Ferramentas como ReportPortal oferecem analytics em tempo real e dashboards para visualização de resultados de testes. A integração com ferramentas de monitoramento como Datadog ou New Relic pode fornecer insights valiosos sobre o comportamento da API.</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detalhes dos Componentes -->
+            <section id="componentes-detalhados" class="section">
+                <div class="container">
+                    <h2 class="section__title">Detalhes dos Componentes</h2>
+                    <div class="card">
+                        <div class="card__body">
+                            <p>A arquitetura deste projeto é composta por diversos scripts e módulos principais que orquestram o processo de importação de especificações, geração de coleções de teste, execução de testes e criação de relatórios. Um entendimento detalhado de cada um desses componentes, suas responsabilidades e interações pode ser encontrado no documento de arquitetura.</p>
+                            <p>Estes detalhes incluem informações sobre o processador Swagger, o construtor de coleções Postman, o script de preparação de ambiente Newman, o gerador de dashboard e as estratégias de gerenciamento de dados de teste.</p>
+                            <p>Para uma análise aprofundada da implementação atual de cada componente, consulte a seção <a href="../ARQ.md#detailed-component-descriptions-current-implementation" target="_blank">Detailed Component Descriptions (Current Implementation) em ARQ.md</a>.</p>
                         </div>
                     </div>
                 </div>
