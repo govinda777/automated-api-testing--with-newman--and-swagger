@@ -11,6 +11,12 @@ DOCKER_IMAGE="automated-api-testing"
 TAG=${1:-latest}
 FULL_IMAGE_NAME="${DOCKER_IMAGE}:${TAG}"
 
+# Define variáveis de ambiente para otimização
+export DOCKER_BUILDKIT=1
+export DOCKER_CLI_EXPERIMENTAL=enabled
+export DOCKER_BUILD_PARALLEL=true
+export DOCKER_BUILD_PARALLEL_JOBS=$(nproc)
+
 show_status() {
     echo "==================================================="
     echo " $1"
@@ -20,25 +26,25 @@ show_status() {
 # Função para limpar cache do Docker
 cleanup_docker_cache() {
     show_status "Limpando cache do Docker..."
+    # Limpa apenas o cache do builder
     docker builder prune -f
-    docker system prune -f
+    # Limpa apenas imagens não utilizadas
+    docker image prune -f --filter "until=24h"
 }
 
 # Função para construir a imagem
 build_image() {
     show_status "Construindo imagem Docker..."
     
-    # Configura Buildx
-    export DOCKER_BUILDKIT=1
-    export DOCKER_CLI_EXPERIMENTAL=enabled
-
     # Constrói a imagem com mais detalhes
     show_status "Construindo imagem Docker com detalhes..."
     
     # Constrói a imagem
     docker build \
         --progress=plain \
-        --no-cache \
+        --pull \
+        --build-arg NODE_ENV=production \
+        --build-arg NODE_OPTIONS="--max-old-space-size=4096" \
         --tag ${FULL_IMAGE_NAME} \
         . \
         | tee build.log
